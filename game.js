@@ -53,16 +53,17 @@ const MC={hand:[['時鐘上哪一支針走得<b>最快</b>？',['秒針','分針
 const mcTask=(skill,pool)=>{const [p,o,e]=pick(MC[pool]);return {kind:'mc',skill,title:'快問快答',prompt:p,opts:o,explain:e};};
 
 const STATIONS=[{name:'秒針星',emoji:'🪐',task:'認識秒針',key:'venus'},{name:'讀秒星',emoji:'🔴',task:'看鐘讀秒',key:'mars'},{name:'秒錶站',emoji:'⏱️',task:'秒錶計時',key:'jupiter'},
- {name:'誠信星',emoji:'🤝',task:'誠實與公平',key:'saturn'},{name:'北斗站',emoji:'🛰️',task:'北斗衛星與時間',key:'beidou'}];
+ {name:'計時星',emoji:'🔵',task:'計算用了多少秒',key:'neptune'},{name:'誠信星',emoji:'🤝',task:'誠實與公平',key:'saturn'},{name:'北斗站',emoji:'🛰️',task:'北斗衛星與時間',key:'beidou'}];
 function stationTasks(i){
  if(i===0)return shuffle([{kind:'fix',skill:'hand',title:'修理太空鐘'},{kind:'find',skill:'hand',title:'時鐘內找秒針'},{kind:'rock',skill:'unit',title:'隕石分類'}]);
  if(i===1){const a=ri(2,11)*5,b=pick([3,7,13,18,22,28,33,41,47,52,56]);return [{kind:'drag',skill:'read',title:'撥秒針',target:a},{kind:'track',skill:'read',title:'秒針追蹤'},{kind:'drag',skill:'read',title:'撥秒針',target:b},...shuffle([{kind:'spin',skill:'relation',title:'一分鐘燃料'},{kind:'match',skill:'relation',title:'記憶翻牌'}])];}
  if(i===2)return [{kind:'watch',skill:'watch',title:'引擎點火',mode:'look',target:ri(5,8)},{kind:'suit',skill:'watch',title:'太空人穿太空衣'},{kind:'record',skill:'watch',title:'記錄成績'},{kind:'beat',skill:'estimate',title:'拍拍節拍'}];
- if(i===3)return [{kind:'race',skill:'honest',title:'誠實計時員'},{kind:'board',skill:'honest',title:'記分牌'},{kind:'judge',skill:'honest',title:'公平裁判'}];
+ if(i===3)return [{kind:'replay',skill:'calc',title:'秒針重播'},{kind:'lcd',skill:'calc',title:'秒錶讀數'},{kind:'endpos',skill:'calc',title:'找結束時間'},{kind:'podium',skill:'calc',title:'頒獎台'}];
+ if(i===4)return [{kind:'race',skill:'honest',title:'誠實計時員'},{kind:'board',skill:'honest',title:'記分牌'},{kind:'judge',skill:'honest',title:'公平裁判'}];
  return [{kind:'orbit',skill:'beidou',title:'北斗衛星上軌道'},...shuffle([{kind:'sync',skill:'beidou',title:'北斗授時'},{kind:'navi',skill:'beidou',title:'北斗導航'}])];}
-const SKILL={hand:'辨認秒針',read:'看鐘讀秒',relation:'秒和分鐘的關係',unit:'選擇時間單位',watch:'秒錶計時',estimate:'估計與實測',honest:'誠實與公平',beidou:'北斗衛星（國安）'};
+const SKILL={hand:'辨認秒針',read:'看鐘讀秒',relation:'秒和分鐘的關係',unit:'選擇時間單位',watch:'秒錶計時',calc:'計算用了多少秒',estimate:'估計與實測',honest:'誠實與公平',beidou:'北斗衛星（國安）'};
 const TIP={hand:'秒針是最幼、最長、走得最快的紅色針。',read:'由 12 開始數小格，1 小格就是 1 秒；每個數字之間有 5 小格。',relation:'60 秒 = 1 分鐘，秒針走一圈就是 60 秒。',
- unit:'很短的事情（眨眼、拍手）用「秒」；較長的事情（吃飯、上課）用「分鐘」。',watch:'聽到「開始」才按開始，完成動作才按停止，記錄「約＿秒」。',estimate:'估計的時間和實際量度可能不同，要用秒錶量度才準確。',honest:'計時要誠實，提早按停會令成績不可信，對別人不公平。',beidou:'北斗由中國自主建設，提供定位、導航和授時（準確時間）。'};
+ unit:'很短的事情（眨眼、拍手）用「秒」；較長的事情（吃飯、上課）用「分鐘」。',watch:'聽到「開始」才按開始，完成動作才按停止，記錄「約＿秒」。',estimate:'估計的時間和實際量度可能不同，要用秒錶量度才準確。',calc:'由開始到結束，數秒針走了多少小格；秒錶就用結束減開始。用的秒數越少越快。',honest:'計時要誠實，提早按停會令成績不可信，對別人不公平。',beidou:'北斗由中國自主建設，提供定位、導航和授時（準確時間）。'};
 
 // =====================================================================
 export function initGame(api){
@@ -72,8 +73,8 @@ const rad=o=>o.geometry.parameters.radius;const bdPiv=new THREE.Object3D();targe
 const gold=new THREE.MeshStandardMaterial({color:0xd8a640,metalness:1,roughness:.3}),pan=new THREE.MeshStandardMaterial({color:0x1a3a8a,metalness:.5,roughness:.3,emissive:0x0a1a40});
 const sats=[];for(let i=0;i<3;i++){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.BoxGeometry(3,3,4),gold));for(const sx of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(8,.2,3),pan);p.position.x=sx*6;g.add(p);}
  const a=i/3*Math.PI*2;{const R0=rad(targets.earth)*1.8;g.position.set(Math.cos(a)*R0,(i-1)*18,Math.sin(a)*R0);};g.lookAt(0,0,0);g.scale.setScalar(1.4);bdPiv.add(g);sats.push(g);}
-const tgtObj={earth:targets.earth,venus:targets.venus,mars:targets.mars,jupiter:targets.jupiter,saturn:targets.saturn,beidou:sats[0]};
-const tgtR={earth:rad(targets.earth),venus:rad(targets.venus),mars:rad(targets.mars),jupiter:rad(targets.jupiter),saturn:rad(targets.saturn),beidou:7};
+const tgtObj={neptune:targets.neptune,earth:targets.earth,venus:targets.venus,mars:targets.mars,jupiter:targets.jupiter,saturn:targets.saturn,beidou:sats[0]};
+const tgtR={neptune:rad(targets.neptune),earth:rad(targets.earth),venus:rad(targets.venus),mars:rad(targets.mars),jupiter:rad(targets.jupiter),saturn:rad(targets.saturn),beidou:7};
 const up=new THREE.Vector3(0,1,0),m4=new THREE.Matrix4(),qT=new THREE.Quaternion(),BP=new THREE.Vector3(),tP=new THREE.Vector3(),tL=new THREE.Vector3(),v1=new THREE.Vector3();
 function standoff(key,outP,outL){const o=tgtObj[key],r=tgtR[key];o.getWorldPosition(BP);const toSun=v1.copy(BP).multiplyScalar(-1).normalize().applyAxisAngle(up,.7);
  const portrait=innerWidth<innerHeight*.9,pf=portrait?1.7:1;outP.copy(BP).addScaledVector(toSun,(key==='beidou'?30:r*2.7)*pf).addScaledVector(up,key==='beidou'?6:r*.5);
@@ -118,7 +119,7 @@ function startFlight(){const s=STATIONS[G.si];mode.m='fly';nav.warned=false;nav.
  hidePanel();flyhint.style.display='block';api.setFree(true,true);SFX.go();autoBtn.style.display='none';
  flyhint.innerHTML=`🚀 飛往 <b>第 ${G.si+1} 站 ${s.emoji} ${s.name}</b>：跟着<span class="y">黃色箭咀</span>，飛進<span class="c">光圈</span>！<span class="ctl">${api.touch?'左邊搖桿：前進／轉彎・右下「加速」':'W／↑ 前進・A D／← → 轉彎・Shift 加速'}</span>`;}
 const proj=new THREE.Vector3();
-function navUpdate(dt){nav.t+=dt;rocksUpdate(dt);if(G&&G.si===2&&!G.rescued&&nav.t>5&&!dbgNoRescue){startRescue();return;}if(G&&G.si===3&&!G.alienMet&&nav.t>5&&!dbgNoRescue){startAlien();return;}
+function navUpdate(dt){nav.t+=dt;rocksUpdate(dt);combatUpdate(dt);if(G&&(G.si===1||G.si===5)&&!G['wave'+G.si]&&nav.t>4&&!dbgNoRescue)startWave();if(G&&G.si===2&&!G.rescued&&nav.t>5&&!dbgNoRescue){startRescue();return;}if(G&&G.si===4&&!G.alienMet&&nav.t>5&&!dbgNoRescue){startAlien();return;}
  if(G){const moving=api.vel.length()>2;G.fuel-=dt*(moving?1.6:.4);if(G.fuel<22){G.fuel=Math.min(30,G.fuel+dt*(moving?6:4));if(!nav.warned){nav.warned=true;toast('⛽ 燃料有點少，自動補給中！繼續飛向光圈吧 😊');}}drawFuel();}standoff(nav.key,tP,tL);ring.position.copy(tP);ring.lookAt(ship.position);const pul=1+Math.sin(nav.t*4)*.05;ring.scale.setScalar(pul);ring2.rotation.z+=dt;
  const pa=lineG.attributes.position.array;v1.set(0,-6,-20).applyQuaternion(ship.quaternion).add(ship.position);pa[0]=v1.x;pa[1]=v1.y;pa[2]=v1.z;pa[3]=tP.x;pa[4]=tP.y;pa[5]=tP.z;lineG.attributes.position.needsUpdate=true;guide.computeLineDistances();
  // gentle steering assist toward the ring
@@ -200,7 +201,7 @@ R.sort=t=>{const cards=shuffle([...shuffle(SEC_ACTS).slice(0,3).map(a=>[...a,'s'
  panel.querySelectorAll('.card').forEach(c=>{draggable(c,(x,y)=>{const b=[...panel.querySelectorAll('.bucket')].find(b=>inside(b,x,y));return b?place(c,b):false;},()=>{});c.addEventListener('click',()=>{if(c.classList.contains('placed'))return;panel.querySelectorAll('.card').forEach(z=>z.classList.remove('sel'));sel=c;c.classList.add('sel');});});
  panel.querySelectorAll('.bucket').forEach(b=>b.addEventListener('click',()=>{if(sel&&!sel.classList.contains('placed')){place(sel,b);sel.classList.remove('sel');sel=null;}}));};
 // helper: make a clock's seconds hand draggable with tick snapping; cb(tick, cumulative)
-function dragHand(svg,cb){const sh=svg.querySelector('[data-hand=sec]');let cur=0,cum=0,act=false;svg.style.touchAction='none';
+function dragHand(svg,cb,st=0){const sh=svg.querySelector('[data-hand=sec]');let cur=st,cum=0,act=false;svg.style.touchAction='none';
  const ang=e=>{const r=svg.getBoundingClientRect();const a=Math.atan2(e.clientX-(r.left+r.width/2),-(e.clientY-(r.top+r.height/2)));return ((a*180/Math.PI)+360)%360;};
  const mv=e=>{const k=Math.round(ang(e)/6)%60;if(k===cur)return;let d=k-cur;if(d>30)d-=60;if(d<-30)d+=60;cum=Math.max(0,cum+d);cur=k;rot(sh,k*6);SFX.tick();cb(k,cum);};
  svg.addEventListener('pointerdown',e=>{act=true;svg.setPointerCapture(e.pointerId);mv(e);e.preventDefault();});svg.addEventListener('pointermove',e=>{if(act)mv(e);});
@@ -498,16 +499,20 @@ R.find=t=>{let round=0,wrong=0;const LBL={min:'這是分針：較粗、走得很
 const rockGeo=new THREE.IcosahedronGeometry(1,1);{const p=rockGeo.attributes.position;for(let i=0;i<p.count;i++){const k=.8+Math.sin(p.getX(i)*5.1+p.getY(i)*3.7)*.15+Math.cos(p.getZ(i)*4.3)*.1;p.setXYZ(i,p.getX(i)*k,p.getY(i)*k,p.getZ(i)*k);}rockGeo.computeVertexNormals();}
 const rocks=[],frags=[];let invul=0,shakeT=0;
 const hitFlash=document.createElement('div');hitFlash.id='hitflash';document.body.appendChild(hitFlash);
-function clearRocks(){rocks.forEach(r=>S.remove(r.m));rocks.length=0;frags.forEach(f=>S.remove(f.m));frags.length=0;}
+function clearRocks(){if(typeof clearCombat==='function'&&bolts)clearCombat();rocks.forEach(r=>S.remove(r.m));rocks.length=0;frags.forEach(f=>S.remove(f.m));frags.length=0;}
 function spawnRocks(a,b){clearRocks();if(!G)return;const n=5+G.si*3,dir=RV.a.copy(b).sub(a),L=dir.length();dir.normalize();const side=RV.b.copy(dir).cross(up).normalize();
  for(let i=0;i<n;i++){const f=.18+.7*(i+Math.random()*.6)/n;const m=new THREE.Mesh(rockGeo,new THREE.MeshStandardMaterial({color:0x8a7a6a,roughness:.95,emissive:0x000000}));const s=7+Math.random()*7;m.scale.set(s,s*(.75+Math.random()*.3),s);
   m.position.copy(a).addScaledVector(dir,L*f).addScaledVector(side,(Math.random()-.5)*60).addScaledVector(up,(Math.random()-.5)*10);m.rotation.set(Math.random()*6,Math.random()*6,0);S.add(m);
-  rocks.push({m,r:s,v:dir.clone().multiplyScalar(-(4+Math.random()*6)).addScaledVector(side,(Math.random()-.5)*4),spin:new THREE.Vector3(Math.random(),Math.random(),Math.random()),front:true});}}
+  rocks.push({m,r:s,big:false,v:dir.clone().multiplyScalar(-(4+Math.random()*6)).addScaledVector(side,(Math.random()-.5)*4),spin:new THREE.Vector3(Math.random(),Math.random(),Math.random()),front:true});}
+ const nb=G.si>=1?2:1;for(let i=0;i<nb;i++){const f=nb===1?.5:.35+i*.3;const mat=new THREE.MeshStandardMaterial({color:0x8a6a58,roughness:1,emissive:0x501008});const m=new THREE.Mesh(rockGeo,mat);const s=24;m.scale.setScalar(s);
+  m.position.copy(a).addScaledVector(dir,L*f);const gl=new THREE.Mesh(rockGeo,new THREE.MeshBasicMaterial({color:new THREE.Color(2.6,.4,.2),side:THREE.BackSide,transparent:true,opacity:.85,depthWrite:false}));gl.scale.setScalar(1.12);m.add(gl);
+  const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.01,1),new THREE.MeshBasicMaterial({color:new THREE.Color(2,.8,.2),wireframe:true,transparent:true,opacity:.35}));m.add(cr);S.add(m);
+  rocks.push({m,r:s,big:true,hp:3,v:dir.clone().multiplyScalar(-3),spin:new THREE.Vector3(.2,.3,.1),front:true,track:true});}}
 const fwdV=new THREE.Vector3(),relV=new THREE.Vector3();
 function rocksUpdate(dt){invul=Math.max(0,invul-dt);fwdV.set(0,0,-1).applyQuaternion(ship.quaternion);
- for(let i=rocks.length-1;i>=0;i--){const k=rocks[i];k.m.position.addScaledVector(k.v,dt);k.m.rotation.x+=k.spin.x*dt;k.m.rotation.y+=k.spin.y*dt;relV.subVectors(k.m.position,ship.position);const d=relV.length();
+ for(let i=rocks.length-1;i>=0;i--){const k=rocks[i];k.m.position.addScaledVector(k.v,dt);if(k.big&&k.track){relV.subVectors(k.m.position,ship.position);const dd=relV.length();if(dd<450&&relV.dot(fwdV)>0){k.m.position.lerp(RV.c.copy(fwdV).multiplyScalar(dd).add(ship.position),1-Math.exp(-dt*1.2));}}k.m.rotation.x+=k.spin.x*dt;k.m.rotation.y+=k.spin.y*dt;relV.subVectors(k.m.position,ship.position);const d=relV.length();
   const near=d<160&&relV.dot(fwdV)>0;k.m.material.emissive.setRGB(near?.5+.3*Math.sin(nav.t*12):0,near?.05:0,0);
-  if(d<k.r+6&&invul<=0){rockHit(k,i);continue;}
+  if(d<k.r+6&&invul<=0){if(k.big){rocks.splice(i,1);S.remove(k.m);hurtFuel(8);tone(90,.35,'sawtooth',.18,0,.4);continue;}rockHit(k,i);continue;}
   const front=relV.dot(fwdV)>0;if(k.front&&!front&&d<k.r+70&&G){G.dodge=(G.dodge||0)+1;}k.front=front;}
  for(let i=frags.length-1;i>=0;i--){const f=frags[i];f.t+=dt;f.m.position.addScaledVector(f.v,dt);f.m.rotation.x+=dt*4;f.m.scale.multiplyScalar(1-dt*.9);if(f.t>1){S.remove(f.m);frags.splice(i,1);}}}
 function rockHit(k,i){invul=1.5;shakeT=.45;S.remove(k.m);rocks.splice(i,1);
@@ -515,6 +520,106 @@ function rockHit(k,i){invul=1.5;shakeT=.45;S.remove(k.m);rocks.splice(i,1);
  if(G){G.fuel=Math.max(5,G.fuel-8);G.hits=(G.hits||0)+1;drawFuel();}tone(90,.35,'sawtooth',.18,0,.4);tone(140,.2,'square',.12,.05,.5);
  hitFlash.classList.remove('on');void hitFlash.offsetWidth;hitFlash.classList.add('on');
  const p=document.createElement('div');p.className='minus';p.textContent='⛽ -8';const g=fuelEl.getBoundingClientRect();p.style.left=g.right+8+'px';p.style.top=g.top+g.height/2+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),1100);}
+
+// ================= v8: shooting, monsters, big rocks =================
+const boltM=new THREE.MeshBasicMaterial({color:new THREE.Color(.6,2.6,3),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});const boltG=new THREE.CylinderGeometry(.35,.35,9,6);boltG.rotateX(Math.PI/2);
+const bolts=[];for(let i=0;i<14;i++){const m=new THREE.Mesh(boltG,boltM);m.visible=false;S.add(m);bolts.push({m,life:0,v:new THREE.Vector3()});}
+let fireCd=0,fireSide=1,firing=false;const fireBtn=document.createElement('div');fireBtn.className='tb';fireBtn.id='bFire';fireBtn.innerHTML='🔫<b>發射</b>';document.body.appendChild(fireBtn);
+if(api.touch)document.body.classList.add('touchdev');
+fireBtn.addEventListener('touchstart',e=>{e.preventDefault();firing=true;fire();},{passive:false});fireBtn.addEventListener('touchend',()=>firing=false);fireBtn.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){firing=true;fire();}});addEventListener('pointerup',()=>{if(!api.touch)firing=false;});
+addEventListener('keydown',e=>{if(mode.m!=='fly')return;if(e.code==='Space'||e.code==='KeyJ'){e.preventDefault();firing=true;fire();}});addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='KeyJ')firing=false;});
+addEventListener('mousedown',e=>{if(mode.m==='fly'&&e.button===0&&e.target.tagName==='CANVAS'){firing=true;fire();}});
+const aimV=new THREE.Vector3(),tmpT=new THREE.Vector3();
+function targetsList(){const L=[];monsters.forEach(m=>{if(m.alive)L.push({o:m,p:m.g.position,r:m.r});});rocks.forEach(k=>{if(k.big)L.push({o:k,p:k.m.position,r:k.r});});return L;}
+function fire(){if(mode.m!=='fly'||fireCd>0)return;fireCd=.18;const b=bolts.find(b=>b.life<=0);if(!b)return;fwdV.set(0,0,-1).applyQuaternion(ship.quaternion);
+ aimV.copy(fwdV);let best=null,bd=1e9;for(const t of targetsList()){tmpT.subVectors(t.p,ship.position);const d=tmpT.length();if(d>900)continue;const c=tmpT.dot(fwdV)/d;if(c>.94&&d<bd){bd=d;best=t;}}if(best)aimV.subVectors(best.p,ship.position).normalize();
+ fireSide=-fireSide;b.m.position.set(fireSide*1.4,-1.2,-4).applyQuaternion(ship.quaternion).add(ship.position);b.v.copy(aimV).multiplyScalar(700).addScaledVector(api.vel,1);b.m.quaternion.setFromUnitVectors(RV.c.set(0,0,-1),aimV);b.m.visible=true;b.life=1.3;
+ tone(1500,.09,'square',.05,0,.25);muzzle.classList.remove('on');void muzzle.offsetWidth;muzzle.classList.add('on');}
+const muzzle=document.createElement('div');muzzle.id='muzzle';document.body.appendChild(muzzle);
+// monsters
+const MCOL=[0xff7ac8,0x7ad6ff,0xffc94d,0x9b7bff,0x6ef08a];const monsters=[];const goos=[];const gooM=new THREE.MeshBasicMaterial({color:new THREE.Color(.6,2,.4)});const gooG=new THREE.SphereGeometry(1.6,10,8);
+for(let i=0;i<10;i++){const m=new THREE.Mesh(gooG,gooM);m.visible=false;S.add(m);goos.push({m,life:0,v:new THREE.Vector3()});}
+function mkMonster(col){const g=new THREE.Group();const body=new THREE.MeshStandardMaterial({color:col,roughness:.4,emissive:col,emissiveIntensity:.35});
+ const b=new THREE.Mesh(new THREE.SphereGeometry(4,20,14),body);b.scale.set(1,.9,1);g.add(b);const w=new THREE.MeshBasicMaterial({color:0xffffff}),k=new THREE.MeshBasicMaterial({color:0x111122});
+ const eyes=Math.random()<.5?1:2;for(let i=0;i<eyes;i++){const sx=eyes===1?0:(i?1.4:-1.4);const e=new THREE.Mesh(new THREE.SphereGeometry(eyes===1?1.8:1.2,12,10),w);e.position.set(sx,1,3.3);g.add(e);const p=new THREE.Mesh(new THREE.SphereGeometry(eyes===1?.8:.55,8,6),k);p.position.set(sx,1,eyes===1?5:4.4);g.add(p);}
+ const mo=new THREE.Mesh(new THREE.TorusGeometry(1,.25,6,12,Math.PI),k);mo.position.set(0,-1,3.7);mo.rotation.z=Math.PI;g.add(mo);
+ const tents=[];for(let i=0;i<4;i++){const t=new THREE.Mesh(new THREE.CapsuleGeometry(.6,3,4,8),body);const a=i/4*Math.PI*2;t.position.set(Math.cos(a)*2.3,-4,Math.sin(a)*2.3);g.add(t);tents.push(t);}
+ for(const sx of[-1,1]){const h=new THREE.Mesh(new THREE.ConeGeometry(.7,2,8),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:.3}));h.position.set(sx*2,3.8,0);h.rotation.z=-sx*.4;g.add(h);}
+ g.visible=false;S.add(g);return {g,tents,body,alive:false,hp:3,r:6,ph:0,off:new THREE.Vector3(),shootT:0};}
+for(let i=0;i<5;i++)monsters.push(mkMonster(MCOL[i]));
+const WV={on:false,t:0};const walert=document.createElement('div');walert.id='walert';document.body.appendChild(walert);
+function startWave(){if(!G)return;G['wave'+G.si]=true;const n=3+Math.min(2,Math.floor(G.si/2));WV.on=true;WV.t=0;WV.left=n;
+ walert.innerHTML='👾 怪獸來了！<b>射擊佢們！</b><small>'+(api.touch?'按右邊「🔫 發射」':'按 空白鍵／J／滑鼠左鍵 發射')+'</small>';walert.classList.remove('on');void walert.offsetWidth;walert.classList.add('on');
+ [0,.2,.4].forEach((d,i)=>tone(400-i*60,.18,'square',.08,d));
+ monsters.forEach((m,i)=>{m.alive=i<n;m.g.visible=i<n;m.hp=i===0?2:3;m.ph=Math.random()*6;m.base=new THREE.Vector3((i-(n-1)/2)*16,(i%2?6:-3),-55-i*6);m.off.copy(m.base).add(new THREE.Vector3(0,20,-120));m.shootT=2+Math.random()*3;m.g.scale.setScalar(1);m.body.emissiveIntensity=.35;});}
+function endWave(cleared){WV.on=false;if(cleared){SFX.win();G.stars++;G.max++;G.fuel=Math.min(100,G.fuel+15);renderHud();toast('🎉 全部怪獸打敗了！⭐ +1　⛽ +15');}else{toast('👾 怪獸飛走了… 下次再挑戰！');monsters.forEach(m=>{if(m.alive){m.leaving=true;}});setTimeout(()=>monsters.forEach(m=>{m.alive=false;m.leaving=false;m.g.visible=false;}),2500);}}
+function popMonster(m){m.alive=false;G.monsters=(G.monsters||0)+1;SFX.star();tone(700,.15,'triangle',.12);tone(1100,.2,'triangle',.1,.08);
+ for(let j=0;j<8;j++){const s=new THREE.Mesh(gemGeo,new THREE.MeshBasicMaterial({color:new THREE.Color(MCOL[j%5]).multiplyScalar(1.6)}));s.position.copy(m.g.position);s.scale.setScalar(.6);S.add(s);frags.push({m:s,t:0,v:new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(70)});}
+ m.g.visible=false;WV.left--;if(WV.left<=0)endWave(true);}
+function hurtFuel(n,label){if(invul>0)return;invul=1;shakeT=.4;if(G){G.fuel=Math.max(5,G.fuel-n);drawFuel();}hitFlash.classList.remove('on');void hitFlash.offsetWidth;hitFlash.classList.add('on');
+ const p=document.createElement('div');p.className='minus';p.textContent=label||('⛽ -'+n);const g=fuelEl.getBoundingClientRect();p.style.left=g.right+8+'px';p.style.top=g.top+g.height/2+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),1100);}
+function breakBig(k){const i=rocks.indexOf(k);if(i<0)return;rocks.splice(i,1);S.remove(k.m);G.rocksShot=(G.rocksShot||0)+1;tone(80,.4,'sawtooth',.16,0,.3);tone(220,.15,'square',.1,.05,.4);SFX.ok();
+ for(let j=0;j<10;j++){const m=new THREE.Mesh(rockGeo,k.m.material);m.scale.setScalar(k.r*.28);m.position.copy(k.m.position);S.add(m);frags.push({m,t:0,v:new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(90)});}burst(fireBtn,['💥','✨']);toast('💥 射爆石頭！');}
+function combatUpdate(dt){fireCd-=dt;if(firing&&fireCd<=0)fire();fireBtn.style.display=mode.m==='fly'&&api.touch?'flex':'none';
+ // bolts
+ for(const b of bolts){if(b.life<=0)continue;b.life-=dt;b.m.position.addScaledVector(b.v,dt);if(b.life<=0){b.m.visible=false;continue;}
+  for(const t of targetsList()){if(b.m.position.distanceTo(t.p)<t.r+3){b.life=0;b.m.visible=false;const o=t.o;
+    if(o.big){o.hp--;o.m.material.emissive.setRGB(1,.4,.1);tone(160,.12,'square',.12);setTimeout(()=>o.m&&o.m.material.emissive.setRGB(.25,0,0),120);o.m.scale.multiplyScalar(.93);if(o.hp<=0)breakBig(o);}
+    else{o.hp--;o.body.emissiveIntensity=1.5;setTimeout(()=>o.body.emissiveIntensity=.35,120);tone(900,.08,'triangle',.1);if(o.hp<=0)popMonster(o);}break;}}}
+ // monsters
+ if(WV.on){WV.t+=dt;if(WV.t>25)endWave(false);}
+ for(const m of monsters){if(!m.g.visible)continue;m.ph+=dt;if(m.leaving){m.off.y+=dt*80;}else{RV.b.copy(m.base).add(RV.c.set(Math.sin(m.ph*1.3)*12,Math.sin(m.ph*1.9)*5,Math.sin(m.ph*.7)*8));m.off.lerp(RV.b,1-Math.exp(-dt*2.5));}
+  m.g.position.copy(m.off).applyQuaternion(ship.quaternion).add(ship.position);m.g.quaternion.copy(ship.quaternion);m.g.rotateY(Math.PI);m.g.rotation.z+=Math.sin(m.ph*3)*.1;m.tents.forEach((t,i)=>t.rotation.x=Math.sin(m.ph*5+i)*.5);
+  if(m.alive&&!m.leaving){m.shootT-=dt;if(m.shootT<=0){m.shootT=3+Math.random()*3;const gb=goos.find(x=>x.life<=0);if(gb){gb.m.position.copy(m.g.position);gb.v.subVectors(ship.position,m.g.position).normalize().multiplyScalar(45).addScaledVector(api.vel,.9);gb.m.visible=true;gb.life=5;tone(250,.2,'sine',.08,0,.6);}}}}
+ for(const gb of goos){if(gb.life<=0)continue;gb.life-=dt;gb.m.position.addScaledVector(gb.v,dt);gb.m.scale.setScalar(1+Math.sin(gb.life*10)*.15);if(gb.m.position.distanceTo(ship.position)<6){gb.life=0;hurtFuel(5,'💚 黏黏 ⛽ -5');tone(150,.3,'sine',.12,0,.5);}if(gb.life<=0)gb.m.visible=false;}
+ // big rock hint
+ if(G&&!G.bigHint){for(const k of rocks){if(k.big&&k.m.position.distanceTo(ship.position)<500){G.bigHint=true;toast('🪨🔴 閃不開！要射爆！'+(api.touch?'按「🔫 發射」':'按空白鍵發射'));break;}}}}
+function clearCombat(){WV.on=false;monsters.forEach(m=>{m.alive=false;m.g.visible=false;});goos.forEach(g=>{g.life=0;g.m.visible=false;});bolts.forEach(b=>{b.life=0;b.m.visible=false;});firing=false;fireBtn.style.display='none';}
+
+// ================= 計時星: work out elapsed seconds (textbook p79 style) =================
+const lcd=(s,cls='')=>`<div class="lcd ${cls}"><span>00:${String(s).padStart(2,'0')}</span><i></i><i></i><i></i></div>`;
+const mini=(sec,min,hr,cls='')=>clockSVG({sec,min,hr,cls:'mini '+cls});
+const pair=(a,b)=>`<div class="pair"><div><small class="st">開始時間</small>${a}</div><b class="arr">➡</b><div><small class="en">結束時間</small>${b}</div></div>`;
+function tiles(ans){return shuffle([ans,ans+5>59?ans-10:ans+5,Math.max(1,ans-5===ans?ans-3:ans-5)].filter((v,i,a)=>a.indexOf(v)===i));}
+function tileDrop(t,ans,msg){const box=panel.querySelector('.tilerow');box.innerHTML=`<div class="useslot">用了 <span class="slotb" id="slotb">？</span> 秒</div><div class="tray">${tiles(ans).map(v=>`<div class="card ntile" data-v="${v}">${v}</div>`).join('')}</div>`;
+ panel.querySelectorAll('.ntile').forEach(c=>{const drop=()=>{if(+c.dataset.v!==ans){miss(t,'再數一數亮起的小格！');return false;}SFX.snap();c.classList.add('placed');c.style.transform='';$('#slotb').replaceWith(c);finish(t,msg);return true;};
+  draggable(c,(x,y)=>inside($('#slotb'),x,y)?drop():false);c.addEventListener('click',()=>{if(!c.classList.contains('placed'))drop();});});}
+// (a) 秒針重播
+R.replay=t=>{const s0=ri(0,11)*5,d=ri(2,9)*5+(Math.random()<.4?ri(1,4):0),s1=(s0+d)%60,m=ri(0,59),h=ri(1,12);const who=pick(['子賢','心悅','詠欣','小樂','家明']);
+ showPanel(`${head(t)}<p class="prompt">✏️ ${who}寫數字 1 至 30。把秒針由<b>開始</b>撥到<b>結束</b>，數數用了多少秒！</p>${pair(mini(s0,m,h),mini(s1,m,h))}
+ <div class="cbox">${clockSVG({sec:s0,min:m,hr:h,cls:'big'})}</div><div class="readout">秒針走了 <b id="cnt">0</b> 小格 = <b id="cnt2">0</b> 秒</div><div class="tilerow"></div><div id="fb"></div>`);
+ const svg=panel.querySelectorAll('.clock')[2];let done=false;const tk=document.createElementNS('http://www.w3.org/2000/svg','circle');const a=s1*6*Math.PI/180;tk.setAttribute('cx',(Math.sin(a)*92).toFixed(1));tk.setAttribute('cy',(-Math.cos(a)*92).toFixed(1));tk.setAttribute('r','8');tk.setAttribute('fill','#2fb3e0');tk.setAttribute('class','tmark');svg.appendChild(tk);
+ dragHand(svg,(k,cum)=>{if(done)return;const c=Math.min(59,cum);arcFrom(svg,s0,c);$('#cnt').textContent=c;$('#cnt2').textContent=c;if(c===d&&k===s1){done=true;SFX.star();fb(`<div class="fb good"><b>到了！</b><p>由 ${s0/5||12} 走到結束，共 ${d} 小格。</p></div>`);tileDrop(t,d,`${who}用了 <b>${d} 秒</b>。秒針走 1 小格是 1 秒！`);}},s0);};
+function arcFrom(svg,s0,c){const p=svg.querySelector('.arc');if(c<=0){p.setAttribute('d','');}else{const a0=s0*6*Math.PI/180,a1=(s0+c)*6*Math.PI/180;p.setAttribute('d',`M${(Math.sin(a0)*90).toFixed(2)},${(-Math.cos(a0)*90).toFixed(2)} A90,90 0 ${c>30?1:0} 1 ${(Math.sin(a1)*90).toFixed(2)},${(-Math.cos(a1)*90).toFixed(2)}`);}
+ svg.querySelectorAll('.tk').forEach(l=>{const i=+l.dataset.i,rel=(i-s0+60)%60;l.setAttribute('stroke',rel>0&&rel<=c?'#ff8a00':(i%5==0?'#3b4a6b':'#9aa7bd'));});}
+// (b) 秒錶讀數
+R.lcd=t=>{const s0=Math.random()<.6?0:ri(1,9),d=ri(8,40),s1=s0+d,who=pick(['心悅','子賢','詠欣','小樂']);let v=0;
+ showPanel(`${head(t)}<p class="prompt">⏱️ ${who}用秒錶計時。拉動<b>燃料桿</b>到用了的秒數！</p>${pair(lcd(s0),lcd(s1,'end'))}
+ <div class="gauge"><input type="range" id="gv" min="0" max="45" value="0"><div class="gnum"><b id="gn">0</b> 秒</div></div><button class="btn go" id="b_ok">確定 ✔</button><div id="fb"></div>`);
+ const gv=$('#gv');gv.oninput=()=>{v=+gv.value;$('#gn').textContent=v;gv.style.setProperty('--p',v/45*100+'%');tone(400+v*15,.03,'square',.03);};
+ $('#b_ok').onclick=()=>{if(t.finished)return;if(v===d)finish(t,`${s1} − ${s0} = <b>${d} 秒</b>。${who}用了 ${d} 秒！`);else miss(t,s0?`由 00:${String(s0).padStart(2,'0')} 到 00:${s1}，要減去開始的 ${s0} 秒喔。`:`秒錶由 00:00 開始，結束是 00:${s1}，用了多少秒？`);};};
+// (d) 找結束時間
+R.endpos=t=>{const s0=ri(0,11)*5,d=pick([10,15,20,25,30,35,40]),s1=(s0+d)%60,m=ri(0,59),h=ri(1,12);
+ showPanel(`${head(t)}<p class="prompt">🎯 開始時秒針在這裏，<b>用了 ${d} 秒</b>。把秒針撥到<b>結束</b>的位置！</p><div class="cbox">${clockSVG({sec:s0,min:m,hr:h,cls:'big'})}</div><div class="readout">已走 <b id="cnt">0</b> 秒</div><button class="btn go" id="b_ok">確定 ✔</button><div id="fb"></div>`);
+ const svg=panel.querySelector('.clock');let cum=0,k=s0;const g=svg.querySelector('[data-hand=sec]').cloneNode(true);g.removeAttribute('data-hand');g.setAttribute('opacity','.3');svg.insertBefore(g,svg.querySelector('[data-hand=sec]'));
+ dragHand(svg,(kk,c)=>{k=kk;cum=c;arcFrom(svg,s0,Math.min(59,c));$('#cnt').textContent=Math.min(59,c);},s0);
+ $('#b_ok').onclick=()=>{if(t.finished)return;if(k===s1)finish(t,`由開始走 ${d} 小格，秒針停在 ${s1===0?60:s1} 秒的位置。`);else miss(t,`現在走了 ${cum} 秒，要走 ${d} 秒。${cum<d?'再多走一點。':'走多了。'}`);};};
+// (c) 頒獎台
+R.podium=t=>{const names=shuffle([['子賢','👦'],['心悅','👧'],['詠欣','🧒']]);let ds=[];while(ds.length<3){const d=ri(3,11)*5-ri(0,2);if(!ds.includes(d)&&ds.every(x=>Math.abs(x-d)>=3))ds.push(d);}const m=ri(0,59),h=ri(1,12);
+ const P=names.map((n,i)=>{const d=ds[i],dig=i===1;const s0=dig?0:ri(0,11)*5;return {n:n[0],e:n[1],d,dig,s0,s1:(s0+d)%60,ok:false,v:Math.max(1,d+pick([-7,-5,5,7]))};});
+ showPanel(`${head(t)}<p class="prompt">🏆 三位小朋友寫數字 1 至 30。先算出各人<b>用了多少秒</b>，再把他們拖上頒獎台（<b>用時最短</b>是第 1 名）！</p>
+ <div class="kids">${P.map((p,i)=>`<div class="kid" data-i="${i}"><div class="kh"><span class="ke">${p.e}</span><b>${p.n}</b></div>${pair(p.dig?lcd(p.s0):mini(p.s0,m,h),p.dig?lcd(p.s1,'end'):mini(p.s1,m,h))}
+  <div class="kv"><button class="btn pm" data-d="-1">－</button><div class="pv"><b id="pv">${p.v}</b> 秒</div><button class="btn pm" data-d="1">＋</button><button class="btn go kok">✔</button></div></div>`).join('')}</div>
+ <div class="podium"><div class="pd p2" data-r="2"><span>2</span></div><div class="pd p1" data-r="1"><span>1</span></div><div class="pd p3" data-r="3"><span>3</span></div></div><div id="fb"></div>`,'wide');
+ let placed=0;const order=[...P].sort((a,b)=>a.d-b.d);
+ panel.querySelectorAll('.kid').forEach(card=>{const p=P[+card.dataset.i];bindPicker(card,()=>p.v,x=>p.v=x);
+  card.querySelector('.kok').onclick=()=>{if(p.ok)return;if(p.v===p.d){p.ok=true;SFX.snap();card.querySelector('.kv').innerHTML=`<div class="kdone">用了 <b>${p.d}</b> 秒 ✔</div>`;
+    const tok=document.createElement('div');tok.className='ktoken';tok.innerHTML=`${p.e}<small>${p.n} ${p.d}秒</small>`;card.appendChild(tok);
+    draggable(tok,(x,y)=>{const pd=[...panel.querySelectorAll('.pd')].find(e=>inside(e,x,y));if(!pd||pd.querySelector('.ktoken'))return false;const r=+pd.dataset.r;
+     if(order[r-1]!==p){miss(t,`${p.n}用了 ${p.d} 秒。用的秒數<b>越少</b>＝越快，名次越前！`);return false;}SFX.ok();tok.classList.add('placed');tok.style.transform='';pd.appendChild(tok);burst(pd);
+     if(++placed===3)finish(t,`${order[0].n}只用了 <b>${order[0].d} 秒</b>，用的時間<b>最短</b>，是第 1 名！`);return true;});
+    if(P.every(q=>q.ok))fb('<div class="fb good"><b>全部算好了！</b><p>把小朋友拖上頒獎台吧 🏆</p></div>');}
+   else miss(t,p.dig?'秒錶的結束數字減去開始數字。':'由開始的秒針位置，數一數走了多少小格。');};});};
 
 // ================= alien encounter event =================
 const AL={on:false};let alObj=null;
@@ -565,8 +670,8 @@ function friendDone(){lightAll(true);SFX.win();G.alienFriend=true;G.stars++;G.ma
 function result(){G.done=true;mode.m='result';api.setMission('任務完成！');renderHud();const pct=G.max?G.stars/G.max:0,medal=pct>=.9?'🏆':pct>=.7?'🥇':pct>=.5?'🥈':'🥉';
  const rows=Object.keys(SKILL).filter(k=>G.stat[k]).map(k=>{const [a,b]=G.stat[k];return {k,a,b,good:a/b>=.75};});const weak=rows.filter(r=>!r.good),nm=G.name||'小太空人';
  const ai=weak.length?`<p>${nm}，你在 <b>${rows.filter(r=>r.good).map(r=>SKILL[r.k]).join('、')||'努力嘗試'}</b> 表現很好！</p><p>可以再多練習：</p><ul>${weak.map(r=>`<li><b>${SKILL[r.k]}</b>：${TIP[r.k]}</li>`).join('')}</ul>`:`<p>${nm}，太厲害了！每一項都掌握得很好！記得計時要<b>誠實、公平</b>啊！</p>`;
- const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我知道估計和實測可能不同','我會誠實記錄結果'];
- showPanel(`<div class="result"><div class="big">${medal}</div><h2>${G.name?G.name+'的':''}成績表</h2><p class="score">⭐ ${G.stars} / ${G.max}　💎 ${G.gems}</p><p class="sub">🪨 閃避石頭 ${G.dodge||0} 次　💥 撞到 ${G.hits||0} 次</p>
+ const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我會計算用了多少秒','我知道估計和實測可能不同','我會誠實記錄結果'];
+ showPanel(`<div class="result"><div class="big">${medal}</div><h2>${G.name?G.name+'的':''}成績表</h2><p class="score">⭐ ${G.stars} / ${G.max}　💎 ${G.gems}</p><p class="sub">🪨 閃避石頭 ${G.dodge||0} 次　💥 撞到 ${G.hits||0} 次<br>👾 打敗怪獸 ${G.monsters||0}　🪨 射爆石頭 ${G.rocksShot||0}</p>
  <div class="skills">${rows.map(r=>`<div class="sk ${r.good?'g':'w'}"><span>${r.good?'✅':'💪'} ${SKILL[r.k]}</span><span>${r.a}/${r.b}</span></div>`).join('')}</div>
  ${G.alienFriend||G.rescued?`<p class="stick">${G.rescued?'<span>🧑‍🚀 救援英雄</span>':''}${G.alienFriend?'<span>👽 外星朋友</span>':''}</p>`:''}<div class="ai"><h3>🤖 AI 小助手的建議</h3>${ai}</div>
  <div class="selfev"><h3>📝 自我評估：我學會了…</h3>${SELF.map((s,i)=>`<div class="se"><span>${s}</span><span class="faces" data-i="${i}"><button>😀</button><button>😐</button><button>🙁</button></span></div>`).join('')}</div>
@@ -607,7 +712,7 @@ function exploreUpdate(dt){exT+=dt;if(exT<.25)return;exT=0;let best=null,bd=1e9;
  api.setMission(near?`附近：${near.n}`:'自由太空探索');}
 
 $('#gmute').onclick=e=>{muted=!muted;e.currentTarget.textContent=muted?'🔇':'🔊';};
-let dbgNoRescue=false;const dbg={rocks,spawnRocks,rockHit,undock(){fly.docked=null;fly.on=false;mode.m='idle';},startAlien,AL,startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
+let dbgNoRescue=false;const dbg={startWave,fire,monsters,WV,set firing(v){firing=v;},rocks,spawnRocks,rockHit,undock(){fly.docked=null;fly.on=false;mode.m='idle';},startAlien,AL,startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
  setSi(i){G.si=i;renderHud();},dock(i){G.si=i;renderHud();mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);glideTo(STATIONS[i].key,.05);},
  task(kind,extra={}){const t={kind,title:'',skill:'hand',...extra};G.tasks=[t];G.ti=0;t.miss=0;t.finished=false;R[kind](t);}};
 return {update,shake:()=>{if(shakeT>0){shakeT-=1/60;return shakeT*.28;}return 0;},api_eva:()=>api.eva,get speed(){return speed;},dbg};
