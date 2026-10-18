@@ -261,7 +261,7 @@ if(t.identifier===lid){lookX+=(t.clientX-lp[0])*1.5;lookY+=(t.clientY-lp[1])*1.5
 addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jid){jid=null;joy={x:0,y:0};kn.style.left=kn.style.top='50%';}if(t.identifier===lid)lid=null;}});
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);comp.setSize(innerWidth,innerHeight);});
 const tmpV=new THREE.Vector3(),cst={};
-const game=initGame({THREE,ship,cam,S,R,touch:touchDev,bodies:[{o:sun,r:300,n:'太陽'},...['金星','地球','火星','木星','土星','海王星'].map((n,i)=>({o:planets[i].m,r:planets[i].m.geometry.parameters.radius,n})),{o:moon,r:16,n:'月球'},{o:station,r:40,n:'太空站'}],targets:{venus:planets[0].m,mars:planets[2].m,jupiter:planets[3].m,saturn:planets[4].m,earth,earthPiv:earth.parent},setFree,setMission:m=>{mission=m;},setSpeedMul:m=>{spMul=m;},get vel(){return vel;}});const spd=document.getElementById('speed'),clk=new THREE.Clock(),q=new THREE.Quaternion(),e3=new THREE.Euler();let t=0,frames=0;
+const game=initGame({THREE,ship,cam,S,R,touch:touchDev,bodies:[{o:sun,r:300,n:'太陽'},...['金星','地球','火星','木星','土星','海王星'].map((n,i)=>({o:planets[i].m,r:planets[i].m.geometry.parameters.radius,n})),{o:moon,r:16,n:'月球'},{o:station,r:40,n:'太空站'}],targets:{venus:planets[0].m,mars:planets[2].m,jupiter:planets[3].m,saturn:planets[4].m,earth,earthPiv:earth.parent},setFree,eva:false,get cockpit(){return cockpit;},setMission:m=>{mission=m;},setSpeedMul:m=>{spMul=m;},get vel(){return vel;}});const spd=document.getElementById('speed'),clk=new THREE.Clock(),q=new THREE.Quaternion(),e3=new THREE.Euler();let t=0,frames=0;
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clk.getDelta(),.05);t+=dt;
 planets.forEach(p=>{p.piv.rotation.y+=p.sp*dt;p.m.rotation.y+=p.spin*dt;});clouds.rotation.y+=.015*dt;moonPiv.rotation.y+=.05*dt;moonPiv.parent.updateMatrixWorld();astG.rotation.y+=.003*dt;ring.rotation.z+=.12*dt;station.rotation.y+=.004*dt;navs.forEach(n=>n.m.visible=((t+n.ph)%1.6)<.25);
 starMat.uniforms.t.value=t;sunMat.uniforms.t.value=t;coronaMat.uniforms.t.value=t;
@@ -275,7 +275,7 @@ if(kid){rotV.y+=-sx*.07*dt;rotV.x+=up*.05*dt;vel.addScaledVector(tmpV.set(0,0,-M
 else vel.addScaledVector(tmpV.set(sx,up,-f).multiplyScalar(60*boost).applyQuaternion(ship.quaternion),dt);}
 rotV.multiplyScalar(Math.pow(.02,dt));vel.multiplyScalar(Math.pow(.45,dt));
 ship.quaternion.multiply(q.setFromEuler(e3.set(rotV.x,rotV.y,rotV.z)));ship.position.addScaledVector(vel,dt);
-const s=auto?game.speed:vel.length(),sw=Math.min(s/400,1);if(!window.__dbg?.freeze)cam.position.set(Math.sin(t*1.7)*.15*sw,Math.sin(t*2.3)*.12*sw,0);if(!window.__dbg?.freeze)cam.rotation.z=Math.sin(t*.9)*.01*sw;cam.fov=70+sw*8;cam.updateProjectionMatrix();
+const s=auto?game.speed:vel.length(),sw=Math.min(s/400,1);if(!window.__dbg?.freeze&&!game.api_eva())cam.position.set(Math.sin(t*1.7)*.15*sw,Math.sin(t*2.3)*.12*sw,0);if(!window.__dbg?.freeze&&!game.api_eva())cam.rotation.z=Math.sin(t*.9)*.01*sw;cam.fov=70+sw*8;cam.updateProjectionMatrix();
 const P=dg.attributes.position.array,o=ship.position;for(let i=0;i<DN*3;i+=3)for(let j=0;j<3;j++){const c=o.getComponent(j);let v=P[i+j];if(v-c>DR)v-=2*DR;else if(v-c<-DR)v+=2*DR;P[i+j]=v;}
 dg.attributes.position.needsUpdate=true;starG.position.copy(o);
 fpsShow+=((1/Math.max(dt,1e-3))-fpsShow)*.05;fwd.set(0,0,-1).applyQuaternion(ship.quaternion);
