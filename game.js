@@ -55,7 +55,7 @@ const mcTask=(skill,pool)=>{const [p,o,e]=pick(MC[pool]);return {kind:'mc',skill
 const STATIONS=[{name:'秒針星',emoji:'🪐',task:'認識秒針',key:'venus'},{name:'讀秒星',emoji:'🔴',task:'看鐘讀秒',key:'mars'},{name:'秒錶站',emoji:'⏱️',task:'秒錶計時',key:'jupiter'},
  {name:'誠信星',emoji:'🤝',task:'誠實與公平',key:'saturn'},{name:'北斗站',emoji:'🛰️',task:'北斗衛星與時間',key:'beidou'}];
 function stationTasks(i){
- if(i===0)return shuffle([{kind:'fix',skill:'hand',title:'修理太空鐘'},{kind:'shoot',skill:'hand',title:'秒針射擊'},{kind:'rock',skill:'unit',title:'隕石分類'}]);
+ if(i===0)return shuffle([{kind:'fix',skill:'hand',title:'修理太空鐘'},{kind:'find',skill:'hand',title:'時鐘內找秒針'},{kind:'rock',skill:'unit',title:'隕石分類'}]);
  if(i===1){const a=ri(2,11)*5,b=pick([3,7,13,18,22,28,33,41,47,52,56]);return [{kind:'drag',skill:'read',title:'撥秒針',target:a},{kind:'track',skill:'read',title:'秒針追蹤'},{kind:'drag',skill:'read',title:'撥秒針',target:b},...shuffle([{kind:'spin',skill:'relation',title:'一分鐘燃料'},{kind:'match',skill:'relation',title:'記憶翻牌'}])];}
  if(i===2)return [{kind:'watch',skill:'watch',title:'引擎點火',mode:'look',target:ri(5,8)},{kind:'suit',skill:'watch',title:'太空人穿太空衣'},{kind:'record',skill:'watch',title:'記錄成績'},{kind:'beat',skill:'estimate',title:'拍拍節拍'}];
  if(i===3)return [{kind:'race',skill:'honest',title:'誠實計時員'},{kind:'board',skill:'honest',title:'記分牌'},{kind:'judge',skill:'honest',title:'公平裁判'}];
@@ -68,15 +68,15 @@ const TIP={hand:'秒針是最幼、最長、走得最快的紅色針。',read:'�
 export function initGame(api){
 const {ship,targets,S}=api;
 // ---- Beidou satellites around Earth
-const bdPiv=new THREE.Object3D();targets.earthPiv.add(bdPiv);bdPiv.position.copy(targets.earth.position);
+const rad=o=>o.geometry.parameters.radius;const bdPiv=new THREE.Object3D();targets.earthPiv.add(bdPiv);bdPiv.position.copy(targets.earth.position);
 const gold=new THREE.MeshStandardMaterial({color:0xd8a640,metalness:1,roughness:.3}),pan=new THREE.MeshStandardMaterial({color:0x1a3a8a,metalness:.5,roughness:.3,emissive:0x0a1a40});
 const sats=[];for(let i=0;i<3;i++){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.BoxGeometry(3,3,4),gold));for(const sx of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(8,.2,3),pan);p.position.x=sx*6;g.add(p);}
- const a=i/3*Math.PI*2;g.position.set(Math.cos(a)*105,(i-1)*18,Math.sin(a)*105);g.lookAt(0,0,0);g.scale.setScalar(1.4);bdPiv.add(g);sats.push(g);}
+ const a=i/3*Math.PI*2;{const R0=rad(targets.earth)*1.8;g.position.set(Math.cos(a)*R0,(i-1)*18,Math.sin(a)*R0);};g.lookAt(0,0,0);g.scale.setScalar(1.4);bdPiv.add(g);sats.push(g);}
 const tgtObj={earth:targets.earth,venus:targets.venus,mars:targets.mars,jupiter:targets.jupiter,saturn:targets.saturn,beidou:sats[0]};
-const tgtR={earth:60,venus:55,mars:40,jupiter:190,saturn:150,beidou:7};
+const tgtR={earth:rad(targets.earth),venus:rad(targets.venus),mars:rad(targets.mars),jupiter:rad(targets.jupiter),saturn:rad(targets.saturn),beidou:7};
 const up=new THREE.Vector3(0,1,0),m4=new THREE.Matrix4(),qT=new THREE.Quaternion(),BP=new THREE.Vector3(),tP=new THREE.Vector3(),tL=new THREE.Vector3(),v1=new THREE.Vector3();
 function standoff(key,outP,outL){const o=tgtObj[key],r=tgtR[key];o.getWorldPosition(BP);const toSun=v1.copy(BP).multiplyScalar(-1).normalize().applyAxisAngle(up,.7);
- const portrait=innerWidth<innerHeight*.9,pf=portrait?1.7:1;outP.copy(BP).addScaledVector(toSun,(key==='beidou'?30:r*3.4)*pf).addScaledVector(up,key==='beidou'?6:r*.5);
+ const portrait=innerWidth<innerHeight*.9,pf=portrait?1.7:1;outP.copy(BP).addScaledVector(toSun,(key==='beidou'?30:r*2.7)*pf).addScaledVector(up,key==='beidou'?6:r*.5);
  const f=BP.clone().sub(outP).normalize(),right=f.clone().cross(up).normalize();
  // put the body on the left (landscape) or top (portrait) so the mission panel never hides it
  outL.copy(BP).addScaledVector(right,portrait?0:r*(key==='beidou'?1.9:1.25)).addScaledVector(up,-r*(portrait?(key==='beidou'?1.8:1.15):.3));}
@@ -108,23 +108,24 @@ function update(dt){
   if(u>=1){fly.on=false;fly.docked=fly.key;speed=0;fly.key==='earth'?homeArrive():arrive();}return true;}
  if(fly.docked){standoff(fly.docked,tP,tL);ship.position.copy(tP);lookQ(tP,tL,qT);ship.quaternion.slerp(qT,Math.min(1,dt*4));speed=0;return true;}
  if(mode.m==='rescue'){rescueUpdate(dt);return true;}
+ if(AL.on||(alObj&&alObj.g.visible))alienUpdate(dt);if(mode.m==='alien')return true;
  if(mode.m==='fly')navUpdate(dt);else if(mode.m==='explore')exploreUpdate(dt);
  return false;}
 // manual flight: ring at next station, arrow, distance, assist
 function startFlight(){const s=STATIONS[G.si];mode.m='fly';nav.warned=false;nav.key=s.key;nav.name=s.name;nav.t=0;nav.start.copy(ship.position);standoff(s.key,tP,tL);nav.dist0=ship.position.distanceTo(tP);
- api.setSpeedMul(Math.max(1,Math.min(3.5,nav.dist0/3000)));ring.visible=guide.visible=true;
- gems.forEach(g=>S.remove(g));gems.length=0;for(let i=1;i<=5;i++){const g=new THREE.Mesh(gemGeo,gemMat);g.position.copy(nav.start).lerp(tP,i/6.5).add(new THREE.Vector3((Math.random()-.5)*40,(Math.random()-.5)*30,(Math.random()-.5)*40));S.add(g);gems.push(g);}
+ api.setSpeedMul(Math.max(1,Math.min(12,nav.dist0/1600)));ring.visible=guide.visible=true;
+ spawnRocks(nav.start,tP);if(G&&!G.rockHint){G.rockHint=true;setTimeout(()=>toast('🪨 小心石頭！撞到會扣燃料'),1200);}gems.forEach(g=>S.remove(g));gems.length=0;for(let i=1;i<=5;i++){const g=new THREE.Mesh(gemGeo,gemMat);g.position.copy(nav.start).lerp(tP,i/6.5).add(new THREE.Vector3((Math.random()-.5)*40,(Math.random()-.5)*30,(Math.random()-.5)*40));S.add(g);gems.push(g);}
  hidePanel();flyhint.style.display='block';api.setFree(true,true);SFX.go();autoBtn.style.display='none';
  flyhint.innerHTML=`🚀 飛往 <b>第 ${G.si+1} 站 ${s.emoji} ${s.name}</b>：跟着<span class="y">黃色箭咀</span>，飛進<span class="c">光圈</span>！<span class="ctl">${api.touch?'左邊搖桿：前進／轉彎・右下「加速」':'W／↑ 前進・A D／← → 轉彎・Shift 加速'}</span>`;}
 const proj=new THREE.Vector3();
-function navUpdate(dt){nav.t+=dt;if(G&&G.si===2&&!G.rescued&&nav.t>5&&!dbgNoRescue){startRescue();return;}
+function navUpdate(dt){nav.t+=dt;rocksUpdate(dt);if(G&&G.si===2&&!G.rescued&&nav.t>5&&!dbgNoRescue){startRescue();return;}if(G&&G.si===3&&!G.alienMet&&nav.t>5&&!dbgNoRescue){startAlien();return;}
  if(G){const moving=api.vel.length()>2;G.fuel-=dt*(moving?1.6:.4);if(G.fuel<22){G.fuel=Math.min(30,G.fuel+dt*(moving?6:4));if(!nav.warned){nav.warned=true;toast('⛽ 燃料有點少，自動補給中！繼續飛向光圈吧 😊');}}drawFuel();}standoff(nav.key,tP,tL);ring.position.copy(tP);ring.lookAt(ship.position);const pul=1+Math.sin(nav.t*4)*.05;ring.scale.setScalar(pul);ring2.rotation.z+=dt;
  const pa=lineG.attributes.position.array;v1.set(0,-6,-20).applyQuaternion(ship.quaternion).add(ship.position);pa[0]=v1.x;pa[1]=v1.y;pa[2]=v1.z;pa[3]=tP.x;pa[4]=tP.y;pa[5]=tP.z;lineG.attributes.position.needsUpdate=true;guide.computeLineDistances();
  // gentle steering assist toward the ring
  lookQ(ship.position,tP,qT);ship.quaternion.slerp(qT,1-Math.exp(-.45*dt));
  const d=ship.position.distanceTo(tP);
  for(let i=gems.length-1;i>=0;i--)if(gems[i].position.distanceTo(ship.position)<30){S.remove(gems[i]);gems.splice(i,1);if(G){G.gems++;G.fuel=Math.min(100,G.fuel+5);toast('💎 +1　⛽ +5');}SFX.gem();renderHud();}
- if(d<RR*1.3){mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;SFX.star();glideTo(nav.key,1.6);return;}
+ if(d<RR*1.3){mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;clearRocks();SFX.star();glideTo(nav.key,1.6);return;}
  if(nav.t>45&&autoBtn.style.display==='none')autoBtn.style.display='block';
  // screen marker / edge arrow
  proj.copy(tP).project(api.cam);const behind=v1.copy(tP).applyMatrix4(api.cam.matrixWorldInverse).z>0;const W=innerWidth,H=innerHeight;
@@ -134,7 +135,7 @@ function navUpdate(dt){nav.t+=dt;if(G&&G.si===2&&!G.rescued&&nav.t>5&&!dbgNoResc
   const ang=Math.atan2(dy,dx),k=Math.min((W/2-60)/Math.abs(Math.cos(ang)||1e-3),(H/2-80)/Math.abs(Math.sin(ang)||1e-3));
   arrow.style.left=(W/2+Math.cos(ang)*k)+'px';arrow.style.top=(H/2+Math.sin(ang)*k)+'px';arrow.querySelector('i').style.transform=`rotate(${ang}rad)`;arrow.querySelector('span').textContent=Math.round(d);}
  if(nav.t-nav.lastUi>.4){nav.lastUi=nav.t;api.setMission(`往 ${nav.name} 還有 ${Math.round(d)}　⛽${G?Math.round(G.fuel):100}%`);}}
-autoBtn.onclick=()=>{SFX.click();if(mode.m!=='fly')return;mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;
+autoBtn.onclick=()=>{SFX.click();if(mode.m!=='fly')return;mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;clearRocks();
  glideTo(nav.key,Math.min(7,Math.max(3,ship.position.distanceTo(tP)/900)));};
 
 // ---------------- UI shell ----------------
@@ -475,14 +476,99 @@ function saved(){RS.phase='done';evaPad.style.display=evaUI.style.display='none'
   showPanel(`<div class="intro thanks"><div class="big">🧑‍🚀💖</div><h2>謝謝你救了我！</h2><p>你在 <b>${Math.max(1,Math.round((RS.ox0||30)-RS.ox))} 秒</b>內完成救援！</p><p class="bonus">⭐ +1　⛽ +20</p><button class="btn go" id="b_cont">繼續飛行 🚀</button></div>`,'small');
   $('#b_cont').onclick=()=>{SFX.click();RS.on=false;mode.m='fly';hidePanel();ring.visible=guide.visible=true;flyhint.style.display='block';api.setFree(true,true);};},700);},900);}
 
+// 時鐘內找秒針: observe a real running clock, tap the 秒針 (3 rounds, harder each time)
+R.find=t=>{let round=0,wrong=0;const LBL={min:'這是分針：較粗、走得很慢',hr:'這是時針：最短、最粗'};
+ const styles=[['wall','🕰️ 掛牆鐘'],['alarm','⏰ 鬧鐘'],['watch','⌚ 手錶']];
+ const render=()=>{const r=round,n=r===2?3:1;const tip=['秒針是<b>紅色</b>的嗎？看看哪支針一格一格地跳！','三支針一樣顏色！看看哪支<b>最幼、最長</b>，<b>走得最快</b>？','三個不同的鐘，<b>每個</b>都找出秒针！'][r].replace('针','針');
+  showPanel(`${head(t)}<p class="prompt">🔍 第 ${r+1} / 3 關：在鐘上找出<b>秒針</b>，按一按！</p><p class="sub">${tip}</p>
+  <div class="fclocks n${n}">${Array.from({length:n},(_,i)=>{const st=r===2?styles[i]:['wall',''];const m=ri(0,59),h=ri(1,12);return `<div class="fclk ${st[0]}" data-i="${i}">${st[1]?`<div class="fcl">${st[1]}</div>`:''}${clockSVG({tap:true,sec:ri(0,59),min:m,hr:h,cls:'fc'})}<div class="fbadge"></div></div>`;}).join('')}</div>
+  <div class="dots3">${[0,1,2].map(i=>`<i class="${i<r?'on':''}"></i>`).join('')}</div><div id="fb"></div>`);
+  const boxes=[...panel.querySelectorAll('.fclk')];let found=0;
+  boxes.forEach(bx=>{const svg=bx.querySelector('svg');if(r>=1)svg.querySelectorAll('.hand line:first-child').forEach(l=>l.setAttribute('stroke','#33415f'));if(r>=1)svg.querySelectorAll('circle[r="7"]').forEach(c=>c.setAttribute('fill','#33415f'));
+   const H={};svg.querySelectorAll('.hand').forEach(g=>{H[g.dataset.hand]=g;const m=g.getAttribute('transform').match(/-?[\d.]+/);g._a=+m[0];});bx._H=H;bx._sec=Math.round(H.sec._a/6);
+   svg.querySelectorAll('.hand').forEach(g=>g.addEventListener('pointerdown',e=>{e.preventDefault();if(t.finished||bx.classList.contains('done'))return;const k=g.dataset.hand,bd=bx.querySelector('.fbadge');
+    if(k==='sec'){bx.classList.add('done');g.classList.add('glow');bd.textContent='最幼、最長、走得最快 ✔';bd.className='fbadge ok in';SFX.ok();burst(bd,['⭐','✨']);found++;
+     if(found===boxes.length){round++;if(round>=3){t.miss=wrong>2?1:0;setTimeout(()=>finish(t,'你是觀察高手！<b>秒針最幼、最長、走得最快</b>，每秒走 1 小格。'),500);}else{fb(`<div class="fb good"><b>找到了！👍</b><p>準備下一關…</p></div>`);setTimeout(render,1500);}}}
+    else{wrong++;SFX.no();g.classList.remove('wrongh');void g.offsetWidth;g.classList.add('wrongh');bd.textContent=LBL[k];bd.className='fbadge bad in';setTimeout(()=>{g.classList.remove('wrongh');if(!bx.classList.contains('done'))bd.className='fbadge';},1800);}}));});
+  let t0=performance.now();const loop=now=>{if(!boxes[0].isConnected)return;const e=(now-t0)/1000,s=Math.floor(e);
+   boxes.forEach(bx=>{const H=bx._H;rot(H.sec,(bx._sec+s)*6);rot(H.min,H.min._a+e*.1);rot(H.hr,H.hr._a+e*.008);});requestAnimationFrame(loop);};requestAnimationFrame(loop);};
+ render();};
+
+// ================= flight obstacles: asteroids to dodge =================
+const rockGeo=new THREE.IcosahedronGeometry(1,1);{const p=rockGeo.attributes.position;for(let i=0;i<p.count;i++){const k=.8+Math.sin(p.getX(i)*5.1+p.getY(i)*3.7)*.15+Math.cos(p.getZ(i)*4.3)*.1;p.setXYZ(i,p.getX(i)*k,p.getY(i)*k,p.getZ(i)*k);}rockGeo.computeVertexNormals();}
+const rocks=[],frags=[];let invul=0,shakeT=0;
+const hitFlash=document.createElement('div');hitFlash.id='hitflash';document.body.appendChild(hitFlash);
+function clearRocks(){rocks.forEach(r=>S.remove(r.m));rocks.length=0;frags.forEach(f=>S.remove(f.m));frags.length=0;}
+function spawnRocks(a,b){clearRocks();if(!G)return;const n=5+G.si*3,dir=RV.a.copy(b).sub(a),L=dir.length();dir.normalize();const side=RV.b.copy(dir).cross(up).normalize();
+ for(let i=0;i<n;i++){const f=.18+.7*(i+Math.random()*.6)/n;const m=new THREE.Mesh(rockGeo,new THREE.MeshStandardMaterial({color:0x8a7a6a,roughness:.95,emissive:0x000000}));const s=7+Math.random()*7;m.scale.set(s,s*(.75+Math.random()*.3),s);
+  m.position.copy(a).addScaledVector(dir,L*f).addScaledVector(side,(Math.random()-.5)*60).addScaledVector(up,(Math.random()-.5)*10);m.rotation.set(Math.random()*6,Math.random()*6,0);S.add(m);
+  rocks.push({m,r:s,v:dir.clone().multiplyScalar(-(4+Math.random()*6)).addScaledVector(side,(Math.random()-.5)*4),spin:new THREE.Vector3(Math.random(),Math.random(),Math.random()),front:true});}}
+const fwdV=new THREE.Vector3(),relV=new THREE.Vector3();
+function rocksUpdate(dt){invul=Math.max(0,invul-dt);fwdV.set(0,0,-1).applyQuaternion(ship.quaternion);
+ for(let i=rocks.length-1;i>=0;i--){const k=rocks[i];k.m.position.addScaledVector(k.v,dt);k.m.rotation.x+=k.spin.x*dt;k.m.rotation.y+=k.spin.y*dt;relV.subVectors(k.m.position,ship.position);const d=relV.length();
+  const near=d<160&&relV.dot(fwdV)>0;k.m.material.emissive.setRGB(near?.5+.3*Math.sin(nav.t*12):0,near?.05:0,0);
+  if(d<k.r+6&&invul<=0){rockHit(k,i);continue;}
+  const front=relV.dot(fwdV)>0;if(k.front&&!front&&d<k.r+70&&G){G.dodge=(G.dodge||0)+1;}k.front=front;}
+ for(let i=frags.length-1;i>=0;i--){const f=frags[i];f.t+=dt;f.m.position.addScaledVector(f.v,dt);f.m.rotation.x+=dt*4;f.m.scale.multiplyScalar(1-dt*.9);if(f.t>1){S.remove(f.m);frags.splice(i,1);}}}
+function rockHit(k,i){invul=1.5;shakeT=.45;S.remove(k.m);rocks.splice(i,1);
+ for(let j=0;j<6;j++){const m=new THREE.Mesh(rockGeo,k.m.material);m.scale.setScalar(k.r*.3);m.position.copy(k.m.position);S.add(m);frags.push({m,t:0,v:new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(60)});}
+ if(G){G.fuel=Math.max(5,G.fuel-8);G.hits=(G.hits||0)+1;drawFuel();}tone(90,.35,'sawtooth',.18,0,.4);tone(140,.2,'square',.12,.05,.5);
+ hitFlash.classList.remove('on');void hitFlash.offsetWidth;hitFlash.classList.add('on');
+ const p=document.createElement('div');p.className='minus';p.textContent='⛽ -8';const g=fuelEl.getBoundingClientRect();p.style.left=g.right+8+'px';p.style.top=g.top+g.height/2+'px';document.body.appendChild(p);setTimeout(()=>p.remove(),1100);}
+
+// ================= alien encounter event =================
+const AL={on:false};let alObj=null;
+function buildUFO(){const g=new THREE.Group();const metal=new THREE.MeshStandardMaterial({color:0xb8c4dc,metalness:.6,roughness:.3,emissive:0x3a4870});
+ const saucer=new THREE.Mesh(new THREE.SphereGeometry(6,28,14),metal);saucer.scale.set(1,.28,1);g.add(saucer);
+ const dome=new THREE.Mesh(new THREE.SphereGeometry(3.2,20,12,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x9fe8ff,transparent:true,opacity:.35,metalness:.2,roughness:.05,emissive:0x2a6a8a,emissiveIntensity:.4}));dome.position.y=1;g.add(dome);
+ const skin=new THREE.MeshStandardMaterial({color:0x7be36b,roughness:.5,emissive:0x2a6a20,emissiveIntensity:.5});const head=new THREE.Mesh(new THREE.SphereGeometry(1.4,18,12),skin);head.position.y=2.2;head.scale.set(1,1.1,1);g.add(head);
+ const eyeM=new THREE.MeshBasicMaterial({color:0x111111}),hi=new THREE.MeshBasicMaterial({color:0xffffff});for(const sx of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(.42,10,8),eyeM);e.position.set(sx*.55,2.4,1.15);g.add(e);const h=new THREE.Mesh(new THREE.SphereGeometry(.13,6,5),hi);h.position.set(sx*.55+.12,2.55,1.5);g.add(h);
+  const an=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.2,5),skin);an.position.set(sx*.6,3.8,0);an.rotation.z=-sx*.4;g.add(an);const ab=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),new THREE.MeshBasicMaterial({color:0xffe066}));ab.position.set(sx*.85,4.4,0);g.add(ab);}
+ const lights=[];const LC=[0xff4d6d,0xffd23f,0x5ee36b,0x4da3ff];for(let i=0;i<8;i++){const a=i/8*Math.PI*2;const m=new THREE.Mesh(new THREE.SphereGeometry(.5,8,6),new THREE.MeshBasicMaterial({color:new THREE.Color(LC[i%4]).multiplyScalar(.5)}));m.position.set(Math.cos(a)*5.6,0,Math.sin(a)*5.6);m.userData.c=LC[i%4];g.add(m);lights.push(m);}
+ const beamM=new THREE.MeshBasicMaterial({color:new THREE.Color(.8,1.6,2.4),transparent:true,opacity:.7,depthWrite:false,blending:THREE.AdditiveBlending});const bubbles=[];for(let i=0;i<5;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.8,10,8),beamM);b.visible=false;ship.add(b);bubbles.push(b);}
+ ship.add(g);return {g,lights,LC,bubbles};}
+const LCN=['紅','黃','綠','藍'],LCC=['#ff4d6d','#ffd23f','#5ee36b','#4da3ff'];
+function lightAll(on){alObj.lights.forEach(l=>l.material.color.set(l.userData.c).multiplyScalar(on?1.6:.5));}
+function lightColor(ci,on){alObj.lights.forEach((l,i)=>{if(i%4===ci)l.material.color.set(l.userData.c).multiplyScalar(on?2.2:.5);});}
+function startAlien(){if(AL.on)return;AL.on=true;G.alienMet=true;mode.m='alien';api.setFree(false);ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';
+ if(!alObj)alObj=buildUFO();alObj.g.visible=true;AL.p=new THREE.Vector3(-30,-4,-160);AL.goal=new THREE.Vector3(-9,-2.5,-28);AL.mode='arrive';AL.t=0;alObj.g.position.copy(AL.p);lightAll(true);
+ [0,.15,.3].forEach((d,i)=>tone(600+i*300,.2,'sine',.1,d));tone(1200,.4,'triangle',.08,.5);
+ showPanel(`<div class="intro alien"><div class="big">👽</div><h2>突發！遇到外星人！</h2><p>📻「咕嚕咕嚕…嗶嗶？」</p><p class="sub">你會怎樣做？</p>
+ <div class="opts achoice"><button class="btn ac atk" id="a_atk">⚔️ 攻擊</button><button class="btn ac lv" id="a_lv">💨 離開</button><button class="btn ac fr" id="a_fr">🤝 做朋友</button></div></div>`,'small');
+ $('#a_atk').onclick=alienAttack;$('#a_lv').onclick=alienLeave;$('#a_fr').onclick=alienFriend;}
+function alienUpdate(dt){AL.t+=dt;const o=alObj;
+ if(AL.mode==='arrive'||AL.mode==='stay'){AL.p.lerp(AL.goal,1-Math.exp(-dt*1.5));}
+ if(AL.mode==='flee'){AL.p.add(RV.b.set(30,22,-25).multiplyScalar(dt*(1+AL.t*2)));}
+ if(AL.mode==='behind'){AL.p.add(RV.b.set(-4,0,60).multiplyScalar(dt*(1+AL.t*1.5)));}
+ if(AL.mode==='bye'){AL.p.add(RV.b.set(8,6,-30).multiplyScalar(dt*(.5+AL.t)));}
+ o.g.position.copy(AL.p);o.g.position.y+=Math.sin(AL.t*2.2)*.6;o.g.rotation.y+=dt*(AL.mode==='flee'?6:.8);o.g.rotation.z=Math.sin(AL.t*1.4)*.08;
+ if(AL.shots){AL.st+=dt;o.bubbles.forEach((b,i)=>{const u=(AL.st-i*.12)/.5;b.visible=u>0&&u<1;if(b.visible){b.position.set(0,-1.5,-4).lerp(AL.p,u);b.scale.setScalar(1+u*1.5);}});if(AL.st>1.2){AL.shots=false;o.bubbles.forEach(b=>b.visible=false);}}}
+function alienEnd(html){showPanel(html,'small');$('#a_go').onclick=()=>{SFX.click();alObj.g.visible=false;AL.on=false;mode.m='fly';hidePanel();ring.visible=guide.visible=true;flyhint.style.display='block';api.setFree(true,true);};}
+function alienAttack(){SFX.click();AL.shots=true;AL.st=0;[0,.12,.24,.36].forEach(d=>tone(900,.12,'sine',.08,d,.5));setTimeout(()=>{lightAll(false);tone(300,.4,'triangle',.1,0,2.5);AL.mode='flee';AL.t=0;},650);
+ G.fuel=Math.max(15,G.fuel-8);setTimeout(()=>{renderHud();alienEnd(`<div class="intro"><div class="big">😨💨</div><h2>外星人嚇走了…</h2><p>未了解對方就攻擊，並不友善喔。</p><p class="sub">⛽ −8　下次試試先打招呼吧！</p><button class="btn go" id="a_go">繼續飛行 🚀</button></div>`);},1300);hidePanel();}
+function alienLeave(){SFX.click();hidePanel();AL.mode='behind';AL.t=0;tone(180,.9,'sawtooth',.06,0,3);toast('💨 加速閃避！');
+ setTimeout(()=>alienEnd(`<div class="intro"><div class="big">🚀</div><h2>你安全離開了</h2><p class="sub">外星人留在後面，揮揮手。</p><button class="btn go" id="a_go">繼續飛行 🚀</button></div>`),1400);}
+function alienFriend(){SFX.click();AL.mode='stay';let round=0,seq=[],inp=[],busy=false;
+ const ui=()=>{showPanel(`<div class="intro"><div class="badge">🤝 打招呼</div><h3>外星人用燈光說「你好」！</h3><p class="sub" id="ast">看清楚燈光的次序，再照樣按一次。</p>
+  <div class="lpads">${LCC.map((c,i)=>`<button class="lp" data-c="${i}" style="--c:${c}">${LCN[i]}</button>`).join('')}</div><div class="dots3">${[0,1].map(i=>`<i class="${i<round?'on':''}"></i>`).join('')}</div></div><div id="fb"></div>`,'small');
+  panel.querySelectorAll('.lp').forEach(b=>b.onpointerdown=e=>{e.preventDefault();if(busy)return;const c=+b.dataset.c;flash(c,b);inp.push(c);
+   if(c!==seq[inp.length-1]){busy=true;SFX.no();$('#ast').innerHTML='咕嚕？不太對…再看一次 👀';setTimeout(play,900);return;}
+   if(inp.length===seq.length){busy=true;SFX.ok();round++;if(round>=2)return friendDone();$('#ast').innerHTML='嗶嗶！對了！再來一個更長的！';setTimeout(()=>{seq.push(ri(0,3));AL.seq=seq;ui();play();},1000);}});};
+ const flash=(c,b)=>{lightColor(c,true);tone([523,659,784,988][c],.25,'triangle',.12);b=b||panel.querySelector(`.lp[data-c="${c}"]`);b&&b.classList.add('on');setTimeout(()=>{lightColor(c,false);b&&b.classList.remove('on');},380);};
+ const play=async()=>{busy=true;inp=[];lightAll(false);$('#ast')&&($('#ast').innerHTML='👀 看清楚燈光…');await sleep(600);for(const c of seq){if(!AL.on)return;flash(c);await sleep(650);}busy=false;$('#ast')&&($('#ast').innerHTML='輪到你了！照樣按 👆');};
+ seq=[ri(0,3),ri(0,3),ri(0,3)];AL.seq=seq;ui();play();}
+function friendDone(){lightAll(true);SFX.win();G.alienFriend=true;G.stars++;G.max++;G.fuel=Math.min(100,G.fuel+20);renderHud();AL.mode='stay';
+ setTimeout(()=>{alienEnd(`<div class="intro"><div class="big">👽🤝🧑‍🚀</div><h2>我們交了新朋友！</h2><p>外星人送你禮物：</p><p class="bonus">⭐ +1　⛽ +20　👽 友誼貼紙</p><button class="btn go" id="a_go">揮手道別，繼續飛行 👋</button></div>`);
+  const b=$('#a_go'),f=b.onclick;},400);setTimeout(()=>{const b=$('#a_go');if(b){const f=b.onclick;b.onclick=()=>{AL.mode='bye';AL.t=0;f();setTimeout(()=>{alObj.g.visible=false;},3000);};}},450);}
+
 // ---------------- result ----------------
 function result(){G.done=true;mode.m='result';api.setMission('任務完成！');renderHud();const pct=G.max?G.stars/G.max:0,medal=pct>=.9?'🏆':pct>=.7?'🥇':pct>=.5?'🥈':'🥉';
  const rows=Object.keys(SKILL).filter(k=>G.stat[k]).map(k=>{const [a,b]=G.stat[k];return {k,a,b,good:a/b>=.75};});const weak=rows.filter(r=>!r.good),nm=G.name||'小太空人';
  const ai=weak.length?`<p>${nm}，你在 <b>${rows.filter(r=>r.good).map(r=>SKILL[r.k]).join('、')||'努力嘗試'}</b> 表現很好！</p><p>可以再多練習：</p><ul>${weak.map(r=>`<li><b>${SKILL[r.k]}</b>：${TIP[r.k]}</li>`).join('')}</ul>`:`<p>${nm}，太厲害了！每一項都掌握得很好！記得計時要<b>誠實、公平</b>啊！</p>`;
  const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我知道估計和實測可能不同','我會誠實記錄結果'];
- showPanel(`<div class="result"><div class="big">${medal}</div><h2>${G.name?G.name+'的':''}成績表</h2><p class="score">⭐ ${G.stars} / ${G.max}　💎 ${G.gems}</p>
+ showPanel(`<div class="result"><div class="big">${medal}</div><h2>${G.name?G.name+'的':''}成績表</h2><p class="score">⭐ ${G.stars} / ${G.max}　💎 ${G.gems}</p><p class="sub">🪨 閃避石頭 ${G.dodge||0} 次　💥 撞到 ${G.hits||0} 次</p>
  <div class="skills">${rows.map(r=>`<div class="sk ${r.good?'g':'w'}"><span>${r.good?'✅':'💪'} ${SKILL[r.k]}</span><span>${r.a}/${r.b}</span></div>`).join('')}</div>
- <div class="ai"><h3>🤖 AI 小助手的建議</h3>${ai}</div>
+ ${G.alienFriend||G.rescued?`<p class="stick">${G.rescued?'<span>🧑‍🚀 救援英雄</span>':''}${G.alienFriend?'<span>👽 外星朋友</span>':''}</p>`:''}<div class="ai"><h3>🤖 AI 小助手的建議</h3>${ai}</div>
  <div class="selfev"><h3>📝 自我評估：我學會了…</h3>${SELF.map((s,i)=>`<div class="se"><span>${s}</span><span class="faces" data-i="${i}"><button>😀</button><button>😐</button><button>🙁</button></span></div>`).join('')}</div>
  <div class="opts two"><button class="btn go" id="b_again">🔄 再玩一次</button></div><div class="opts two endch"><button class="btn go home" id="b_home">🌍 飛返地球</button><button class="btn alt" id="b_free">🚀 自由太空探索</button></div></div>`,'wide');
  panel.querySelectorAll('.faces').forEach(f=>f.querySelectorAll('button').forEach(b=>b.onclick=()=>{SFX.click();f.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');G.self[f.dataset.i]=b.textContent;}));
@@ -491,7 +577,7 @@ function result(){G.done=true;mode.m='result';api.setMission('任務完成！');
 $('#gbtn').onclick=start;$('#gfree').onclick=()=>{ac();$('#start').style.display='none';explore();};
 // ---- after the result: fly home to Earth, or free exploration
 function startHome(){hidePanel();nav.warned=false;if(G)G.fuel=100;renderHud();fly.docked=null;mode.m='fly';nav.key='earth';nav.name='地球';nav.t=0;nav.start.copy(ship.position);standoff('earth',tP,tL);nav.dist0=ship.position.distanceTo(tP);
- api.setSpeedMul(Math.max(1,Math.min(3.5,nav.dist0/3000)));ring.visible=guide.visible=true;
+ api.setSpeedMul(Math.max(1,Math.min(12,nav.dist0/1600)));ring.visible=guide.visible=true;
  gems.forEach(g=>S.remove(g));gems.length=0;for(let i=1;i<=5;i++){const g=new THREE.Mesh(gemGeo,gemMat);g.position.copy(nav.start).lerp(tP,i/6.5).add(new THREE.Vector3((Math.random()-.5)*40,(Math.random()-.5)*30,(Math.random()-.5)*40));S.add(g);gems.push(g);}
  flyhint.style.display='block';api.setFree(true,true);SFX.go();autoBtn.style.display='none';pcard.style.display=backBtn.style.display='none';
  flyhint.innerHTML=`🌍 <b>飛返地球</b>！跟着<span class="y">黃色箭咀</span>，飛進<span class="c">光圈</span>就到家了！<span class="ctl">${api.touch?'左邊搖桿：前進／轉彎・右下「加速」':'W／↑ 前進・A D／← → 轉彎・Shift 加速'}</span>`;}
@@ -516,13 +602,13 @@ const bp=new THREE.Vector3();
 const tst=document.createElement('div');tst.id='toast';document.body.appendChild(tst);let tsT=0;
 function toast(h){tst.innerHTML=h;tst.style.display='block';tst.classList.remove('in');void tst.offsetWidth;tst.classList.add('in');clearTimeout(tsT);tsT=setTimeout(()=>tst.style.display='none',2600);}
 function exploreUpdate(dt){exT+=dt;if(exT<.25)return;exT=0;let best=null,bd=1e9;
- for(const b of bodies){b.o.getWorldPosition(bp);const d=bp.distanceTo(ship.position)-b.r;if(d<b.r*5+150&&d<bd){bd=d;best=b;}}
+ for(const b of bodies){b.o.getWorldPosition(bp);const d=bp.distanceTo(ship.position)-b.r;if(d<Math.max(250,b.r*2.5)&&d<bd){bd=d;best=b;}}
  if(best!==near){near=best;if(best){pcard.innerHTML=`<b>${best.e} ${best.n}</b><span>${best.f}</span>`;flyhint.style.display='none';pcard.style.display='block';pcard.classList.remove('in');void pcard.offsetWidth;pcard.classList.add('in');SFX.click();}else pcard.style.display='none';}
  api.setMission(near?`附近：${near.n}`:'自由太空探索');}
 
 $('#gmute').onclick=e=>{muted=!muted;e.currentTarget.textContent=muted?'🔇':'🔊';};
-let dbgNoRescue=false;const dbg={startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
+let dbgNoRescue=false;const dbg={rocks,spawnRocks,rockHit,undock(){fly.docked=null;fly.on=false;mode.m='idle';},startAlien,AL,startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
  setSi(i){G.si=i;renderHud();},dock(i){G.si=i;renderHud();mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);glideTo(STATIONS[i].key,.05);},
  task(kind,extra={}){const t={kind,title:'',skill:'hand',...extra};G.tasks=[t];G.ti=0;t.miss=0;t.finished=false;R[kind](t);}};
-return {update,api_eva:()=>api.eva,get speed(){return speed;},dbg};
+return {update,shake:()=>{if(shakeT>0){shakeT-=1/60;return shakeT*.28;}return 0;},api_eva:()=>api.eva,get speed(){return speed;},dbg};
 }

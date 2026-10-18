@@ -145,6 +145,19 @@ body:not(.ready) #start{background:radial-gradient(#14205a,#03050f)}
 .lpad.rev .rkt{animation:shake .25s infinite}.lpad.rev .flm{opacity:.6;animation:pulse .3s infinite}.lpad.launch .rkt{bottom:600px;animation:none}.lpad.launch .flm{opacity:1}.lpad.launch .smk{opacity:1;animation:pop .6s}
 .runner{animation:bob .35s ease-in-out infinite}@keyframes bob{50%{margin-top:-5px}}
 @media (max-aspect-ratio:4/5),(max-width:640px){.arena{height:200px}.memo .mcard{height:62px;font-size:14px}.pk{width:60px;min-height:48px}.pad>div{gap:56px}.beat{width:80px;height:80px}.bigtap{min-height:58px;font-size:22px}}
+/* find the seconds hand */
+.fclocks{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.fclk{position:relative;display:flex;flex-direction:column;align-items:center;border-radius:20px;padding:4px}
+.fclocks.n1 .fc{width:min(230px,50vw,32vh)}.fclocks.n3 .fc{width:min(118px,26vw,17vh)}.fcl{font-size:14px;font-weight:800;color:#ffd86b}
+.fclk.alarm .fc{filter:drop-shadow(0 0 0 #000)}.fclk.alarm .fc circle[r="114"]{fill:#fff3f3;stroke:#ff5d6c}.fclk.watch{background:linear-gradient(#7a5a3a,#5a3d22);padding:4px 10px}.fclk.watch .fc circle[r="114"]{fill:#f4f1e8;stroke:#c9a35b}
+.fc .hand{cursor:pointer}.fc .hand.glow line:first-child{stroke:#ff3b5c!important;filter:drop-shadow(0 0 6px #ff3b5c)}.fc .hand.wrongh line:first-child{stroke:#ffb020!important;animation:shake .4s}
+.fbadge{min-height:0;font-size:14px;font-weight:900;border-radius:10px;padding:0 8px;opacity:0;transition:.25s;text-align:center;max-width:220px}.fbadge.in{opacity:1;padding:3px 8px;margin-top:2px}.fbadge.ok{background:#3cbf65;color:#fff}.fbadge.bad{background:#ffb020;color:#4a2c00}
+/* rocks */
+#hitflash{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;box-shadow:inset 0 0 120px 40px rgba(255,30,50,.75)}#hitflash.on{animation:hitf .6s}@keyframes hitf{0%,30%{opacity:1}100%{opacity:0}}
+.minus{position:fixed;z-index:9;color:#ff5d6c;font-weight:900;font-size:28px;text-shadow:0 2px 4px #000;pointer-events:none;animation:minus 1.1s forwards}@keyframes minus{to{transform:translateY(-50px);opacity:0}}
+/* alien */
+.achoice{gap:10px}.ac{font-size:22px;min-height:60px}.ac.atk{background:linear-gradient(180deg,#ff9aa8,#e2566c);color:#fff}.ac.lv{background:linear-gradient(180deg,#bcd0ff,#6f8fe0);color:#fff}.ac.fr{background:linear-gradient(180deg,#9df58f,#3cbf65);color:#fff}
+.alien h2{color:#9df58f!important}.lpads{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}.lp{min-height:72px;border:none;border-radius:18px;font:inherit;font-size:22px;font-weight:900;color:#fff;background:var(--c);opacity:.55;box-shadow:0 4px 0 #0004;cursor:pointer;text-shadow:0 1px 2px #0008}
+.lp.on{opacity:1;transform:scale(1.08);box-shadow:0 0 24px var(--c)}.stick span{display:inline-block;background:#ffd86b;color:#4a2c00;border-radius:14px;padding:4px 12px;margin:3px;font-weight:900}
 /* rescue */
 #evapad{display:none;position:fixed;inset:0;z-index:3;touch-action:none;cursor:crosshair}
 #evaui{display:none;position:fixed;inset:0;z-index:5;pointer-events:none}#evaui .btn,#evaui .evacard{pointer-events:auto}

@@ -19,7 +19,7 @@ R.shadowMap.enabled=false; // shadows from a point light = 6 extra scene passes;
 document.body.prepend(R.domElement);
 const S=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,80000);
-const ship=new THREE.Object3D();ship.position.set(0,60,1300);S.add(ship);ship.add(cam);
+const ship=new THREE.Object3D();ship.position.set(0,60,2520);S.add(ship);ship.add(cam);
 const rnd=(s=>()=>(s=(s*16807)%2147483647)/2147483647)(42);
 
 // ---------- shared GLSL noise
@@ -90,14 +90,16 @@ const sunMat=new THREE.ShaderMaterial({uniforms:{t:{value:0}},vertexShader:'vary
   fragmentShader:NOISE+`uniform float t;varying vec3 p,n,vv;void main(){vec3 q=normalize(p);float g=fbm(q*7.+vec3(t*.03));float g2=fbm(q*22.-vec3(t*.05));
   float mu=max(dot(n,vv),0.);float limb=.45+.55*pow(mu,.5);float k=(.35+g*g2*2.6)*limb;
   gl_FragColor=vec4(vec3(1.6,.95,.42)*k+vec3(.25,.12,.02),1.);}`});
-const sun=new THREE.Mesh(new THREE.SphereGeometry(300,...SEG),sunMat);S.add(sun);
+// true relative planet sizes (Earth = ER); the Sun is compressed (real: 109× Earth)
+const ER=70,SUNR=900;
+const sun=new THREE.Mesh(new THREE.SphereGeometry(SUNR,...SEG),sunMat);S.add(sun);
 const coronaMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{t:{value:0}},
   vertexShader:'varying vec2 u;void main(){u=uv*2.-1.;vec4 mv=modelViewMatrix*vec4(0,0,0,1);mv.xy+=position.xy;gl_Position=projectionMatrix*mv;}',
   fragmentShader:NOISE+`uniform float t;varying vec2 u;void main(){float r=length(u);float a=atan(u.y,u.x);
   float rays=fbm(vec3(cos(a)*3.,sin(a)*3.,t*.08))*.9+fbm(vec3(cos(a)*11.,sin(a)*11.,t*.12))*.5;
   float core=smoothstep(1.,.0,r);float g=pow(core,7.)*1.4+pow(core,3.)*.7*rays*rays*rays+pow(core,1.6)*.035;
   gl_FragColor=vec4(vec3(1.,.72,.42)*g,1.);}`});
-const corona=new THREE.Mesh(new THREE.PlaneGeometry(2400,2400),coronaMat);corona.frustumCulled=false;S.add(corona);
+const corona=new THREE.Mesh(new THREE.PlaneGeometry(SUNR*8,SUNR*8),coronaMat);corona.frustumCulled=false;S.add(corona);
 const sunL=new THREE.PointLight(0xfff0dd,4,0,0);S.add(sunL);
 function radTex(stops,sz=128){const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d'),g=x.createRadialGradient(sz/2,sz/2,0,sz/2,sz/2,sz/2);stops.forEach(([o,s])=>g.addColorStop(o,s));x.fillStyle=g;x.fillRect(0,0,sz,sz);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
 const flareT=radTex([[0,'rgba(255,255,255,.9)'],[.4,'rgba(255,220,180,.25)'],[1,'rgba(255,200,150,0)']]);
@@ -126,31 +128,31 @@ const m=new THREE.Mesh(new THREE.SphereGeometry(r,...SEG),mat);
 m.position.x=d;m.rotation.z=opts.tilt||0;piv.add(m);if(opts.atmo)m.add(atmo(r,opts.atmo,opts.ak||1));
 if(opts.tex)stream(opts.tex,t=>{mat.map=t;mat.color.set(0xffffff);mat.needsUpdate=true;},true,opts.prio??d/1000);
 planets.push({piv,m,sp:0.02/Math.sqrt(d/1000),spin:opts.spin||.06});return m;}
-planet(1000,55,0xd8b77c,2.2,{atmo:0xffd9a0,tex:'venus.webp',prio:2});
-const earth=planet(1500,60,0x3a6aa8,0.2,{atmo:0x5fa8ff,tilt:.41,ak:1.3});
+planet(2400,ER*.95,0xd8b77c,2.2,{atmo:0xffd9a0,tex:'venus.webp',prio:2});
+const earth=planet(3200,ER,0x3a6aa8,0.2,{atmo:0x5fa8ff,tilt:.41,ak:1.3});
 {const em=earth.material;em.roughness=.7;em.metalness=.1;
  stream('earth_lo.webp',t=>{if(!em.map||em.map.image.width<300){em.map=t;em.color.set(0xffffff);em.needsUpdate=true;}},true,0);
  stream('earth.webp',t=>{em.map=t;em.needsUpdate=true;},true,3);
  stream('earth_normal.webp',t=>{em.normalMap=t;em.normalScale.set(.85,-.85);em.needsUpdate=true;},false,3.1);
  stream('earth_spec.webp',t=>{em.roughnessMap=t;em.needsUpdate=true;},false,3.2);}
 const cloudM=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false});
-const clouds=new THREE.Mesh(new THREE.SphereGeometry(60.6,...SEG),cloudM);earth.add(clouds);
+const clouds=new THREE.Mesh(new THREE.SphereGeometry(ER*1.01,...SEG),cloudM);earth.add(clouds);
 stream('earth_clouds.webp',t=>{cloudM.alphaMap=t;cloudM.opacity=1;cloudM.needsUpdate=true;},false,3.3);
-const moonPiv=new THREE.Object3D();earth.parent.add(moonPiv);moonPiv.position.x=1500;
+const moonPiv=new THREE.Object3D();earth.parent.add(moonPiv);moonPiv.position.x=3200;
 const moonM=new THREE.MeshStandardMaterial({color:0x888888,roughness:1});
-const moon=new THREE.Mesh(new THREE.SphereGeometry(16,32,24),moonM);moon.position.x=140;moonPiv.add(moon);
+const moon=new THREE.Mesh(new THREE.SphereGeometry(ER*.27,32,24),moonM);moon.position.x=ER*2.6;moonPiv.add(moon);
 stream('moon.webp',t=>{moonM.map=t;moonM.color.set(0xffffff);moonM.needsUpdate=true;},true,4);
-planet(2300,40,0xb5583a,1.4,{atmo:0xff8a60,tilt:.44,tex:'mars.webp',prio:5,ak:.6});
-planet(4400,190,0xc8a882,3.4,{spin:.15,tilt:.05,tex:'jupiter.webp',prio:6,atmo:0xffd8a8,ak:.5});
-const saturn=planet(5900,150,0xd9c08c,4.6,{spin:.13,tilt:.47,tex:'saturn.webp',prio:7,atmo:0xffe0a0,ak:.4});
-{const r=150,rg=new THREE.RingGeometry(r*1.25,r*2.3,256,1),uv=rg.attributes.uv,pos=rg.attributes.position;
+planet(4000,ER*.53,0xb5583a,1.4,{atmo:0xff8a60,tilt:.44,tex:'mars.webp',prio:5,ak:.6});
+planet(7500,ER*11.2,0xc8a882,3.4,{spin:.15,tilt:.05,tex:'jupiter.webp',prio:6,atmo:0xffd8a8,ak:.5});
+const saturn=planet(11000,ER*9.45,0xd9c08c,4.6,{spin:.13,tilt:.47,tex:'saturn.webp',prio:7,atmo:0xffe0a0,ak:.4});
+{const r=ER*9.45,rg=new THREE.RingGeometry(r*1.25,r*2.3,256,1),uv=rg.attributes.uv,pos=rg.attributes.position;
 for(let k=0;k<uv.count;k++){const l=Math.hypot(pos.getX(k),pos.getY(k));uv.setXY(k,(l-r*1.25)/(r*1.05),.5);}
 const rmM=new THREE.MeshStandardMaterial({color:0xc8b48a,side:THREE.DoubleSide,transparent:true,opacity:.5,roughness:.9,depthWrite:false});
 const rm=new THREE.Mesh(rg,rmM);rm.rotation.x=Math.PI/2;rm.receiveShadow=true;saturn.add(rm);
 stream('saturn_ring.webp',t=>{rmM.map=t;rmM.color.set(0xffffff);rmM.opacity=1;rmM.needsUpdate=true;},true,7.1);}
-planet(7600,110,0x4f78d8,5.5,{atmo:0x6f9cff,spin:.1,tex:'neptune.webp',prio:8});
+planet(14500,ER*3.9,0x4f78d8,5.5,{atmo:0x6f9cff,spin:.1,tex:'neptune.webp',prio:8});
 // --- space station (procedural, near start)
-const station=new THREE.Group();station.position.set(70,40,1080);station.rotation.set(.25,.5,0);S.add(station);
+const station=new THREE.Group();station.position.set(70,40,2300);station.rotation.set(.25,.5,0);S.add(station);
 const metal=new THREE.MeshStandardMaterial({color:0x8f959d,metalness:.85,roughness:.5});
 const darkM=new THREE.MeshStandardMaterial({color:0x3a3f46,metalness:.8,roughness:.45});
 const goldM=new THREE.MeshStandardMaterial({color:0xd4a64a,metalness:1,roughness:.3});
@@ -206,20 +208,20 @@ const BufferGeometryUtilsLite={mergeVertices(g){const p=g.attributes.position,ma
 const astG=new THREE.Group();S.add(astG);const astMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,metalness:.05});
 const dm=new THREE.Object3D(),col=new THREE.Color();const NK=touchDev?6:8,NPER=touchDev?140:300;
 for(let k=0;k<NK;k++){const im=new THREE.InstancedMesh(rockGeo(k,2),astMat,NPER);im.castShadow=false;im.receiveShadow=true;
- for(let i=0;i<NPER;i++){const a=rnd()*Math.PI*2,dd=2900+(rnd()+rnd()+rnd())/3*600;dm.position.set(Math.cos(a)*dd,(rnd()+rnd()-1)*55,Math.sin(a)*dd);dm.rotation.set(rnd()*6,rnd()*6,rnd()*6);
+ for(let i=0;i<NPER;i++){const a=rnd()*Math.PI*2,dd=4900+(rnd()+rnd()+rnd())/3*900;dm.position.set(Math.cos(a)*dd,(rnd()+rnd()-1)*55,Math.sin(a)*dd);dm.rotation.set(rnd()*6,rnd()*6,rnd()*6);
   const s=1.2+Math.pow(rnd(),4)*30;dm.scale.set(s,s*(.7+rnd()*.3),s*(.75+rnd()*.25));dm.updateMatrix();im.setMatrixAt(i,dm.matrix);
   const ty=rnd();im.setColorAt(i,ty<.6?col.setHSL(.07+rnd()*.04,.1+rnd()*.1,.2+rnd()*.12):ty<.85?col.setHSL(.03,.22,.18+rnd()*.1):col.setHSL(.6,.04,.3+rnd()*.12));}
  astG.add(im);}
 // a few hero boulders close to the start route
-{const hg=rockGeo(99,touchDev?3:4);[[260,20,780,26],[-180,-30,620,18],[120,50,400,12]].forEach(([x,y,z,s])=>{const m=new THREE.Mesh(hg,new THREE.MeshStandardMaterial({color:0x5a5048,vertexColors:true,roughness:.95}));m.position.set(x,y,z);m.scale.setScalar(s);m.rotation.set(rnd()*6,rnd()*6,0);S.add(m);});}
+{const hg=rockGeo(99,touchDev?3:4);[[260,20,2000,26],[-180,-30,1840,18],[120,50,1620,12]].forEach(([x,y,z,s])=>{const m=new THREE.Mesh(hg,new THREE.MeshStandardMaterial({color:0x5a5048,vertexColors:true,roughness:.95}));m.position.set(x,y,z);m.scale.setScalar(s);m.rotation.set(rnd()*6,rnd()*6,0);S.add(m);});}
 // belt gravel / dust glitter
-{const n=touchDev?3000:8000,g=new THREE.BufferGeometry(),p=new Float32Array(n*3);for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,dd=2850+(rnd()+rnd())/2*700;p.set([Math.cos(a)*dd,(rnd()+rnd()-1)*70,Math.sin(a)*dd],i*3);}
+{const n=touchDev?3000:8000,g=new THREE.BufferGeometry(),p=new Float32Array(n*3);for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,dd=4850+(rnd()+rnd())/2*1000;p.set([Math.cos(a)*dd,(rnd()+rnd()-1)*70,Math.sin(a)*dd],i*3);}
  g.setAttribute('position',new THREE.BufferAttribute(p,3));astG.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xb8a68f,size:1.6,sizeAttenuation:true,transparent:true,opacity:.7,depthWrite:false})));}
 // --- near dust for parallax
 const DN=touchDev?600:1200,DR=150,dg=new THREE.BufferGeometry(),dp=new Float32Array(DN*3);for(let i=0;i<DN*3;i++)dp[i]=(Math.random()*2-1)*DR;
 dg.setAttribute('position',new THREE.BufferAttribute(dp,3));S.add(new THREE.Points(dg,new THREE.PointsMaterial({color:0x99ccff,size:.25,transparent:true,opacity:.35,depthWrite:false})));
 // ---------- cockpit (procedural, see cockpit.js)
-const bodyDefs=[[sun,'太陽','#ffd27a',300],[planets[0].m,'金星','#ffd9a0',55],[earth,'地球','#6fb6ff',60],[planets[2].m,'火星','#ff8a60',40],[planets[3].m,'木星','#e8c49a',190],[planets[4].m,'土星','#f0dca0',150],[planets[5].m,'海王星','#7fa6ff',110],[station,'太空站','#aaffcc',50]];
+const colV=new THREE.Vector3(),colD=new THREE.Vector3();const bodyDefs=[[sun,'太陽','#ffd27a',SUNR],[planets[0].m,'金星','#ffd9a0',(planets[0].m).geometry.parameters.radius],[earth,'地球','#6fb6ff',(earth).geometry.parameters.radius],[planets[2].m,'火星','#ff8a60',(planets[2].m).geometry.parameters.radius],[planets[3].m,'木星','#e8c49a',(planets[3].m).geometry.parameters.radius],[planets[4].m,'土星','#f0dca0',(planets[4].m).geometry.parameters.radius],[planets[5].m,'海王星','#7fa6ff',(planets[5].m).geometry.parameters.radius],[station,'太空站','#aaffcc',50]];
 const cockpit=buildCockpit({R,ship,touch:touchDev,bodies:bodyDefs.map(([obj,name,col,r])=>({obj,name,col,r}))});
 const fwd=new THREE.Vector3();let fpsShow=60,inF=0,inX=0,boostOn=false;
 // ---------- post: bloom, adaptive
@@ -261,7 +263,7 @@ if(t.identifier===lid){lookX+=(t.clientX-lp[0])*1.5;lookY+=(t.clientY-lp[1])*1.5
 addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jid){jid=null;joy={x:0,y:0};kn.style.left=kn.style.top='50%';}if(t.identifier===lid)lid=null;}});
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);comp.setSize(innerWidth,innerHeight);});
 const tmpV=new THREE.Vector3(),cst={};
-const game=initGame({THREE,ship,cam,S,R,touch:touchDev,bodies:[{o:sun,r:300,n:'太陽'},...['金星','地球','火星','木星','土星','海王星'].map((n,i)=>({o:planets[i].m,r:planets[i].m.geometry.parameters.radius,n})),{o:moon,r:16,n:'月球'},{o:station,r:40,n:'太空站'}],targets:{venus:planets[0].m,mars:planets[2].m,jupiter:planets[3].m,saturn:planets[4].m,earth,earthPiv:earth.parent},setFree,eva:false,get cockpit(){return cockpit;},setMission:m=>{mission=m;},setSpeedMul:m=>{spMul=m;},get vel(){return vel;}});const spd=document.getElementById('speed'),clk=new THREE.Clock(),q=new THREE.Quaternion(),e3=new THREE.Euler();let t=0,frames=0;
+const game=initGame({THREE,ship,cam,S,R,touch:touchDev,bodies:[{o:sun,r:SUNR,n:'太陽'},...['金星','地球','火星','木星','土星','海王星'].map((n,i)=>({o:planets[i].m,r:planets[i].m.geometry.parameters.radius,n})),{o:moon,r:ER*.27,n:'月球'},{o:station,r:40,n:'太空站'}],targets:{venus:planets[0].m,mars:planets[2].m,jupiter:planets[3].m,saturn:planets[4].m,earth,earthPiv:earth.parent},setFree,eva:false,get cockpit(){return cockpit;},setMission:m=>{mission=m;},setSpeedMul:m=>{spMul=m;},get vel(){return vel;}});const spd=document.getElementById('speed'),clk=new THREE.Clock(),q=new THREE.Quaternion(),e3=new THREE.Euler();let t=0,frames=0;
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clk.getDelta(),.05);t+=dt;
 planets.forEach(p=>{p.piv.rotation.y+=p.sp*dt;p.m.rotation.y+=p.spin*dt;});clouds.rotation.y+=.015*dt;moonPiv.rotation.y+=.05*dt;moonPiv.parent.updateMatrixWorld();astG.rotation.y+=.003*dt;ring.rotation.z+=.12*dt;station.rotation.y+=.004*dt;navs.forEach(n=>n.m.visible=((t+n.ph)%1.6)<.25);
 starMat.uniforms.t.value=t;sunMat.uniforms.t.value=t;coronaMat.uniforms.t.value=t;
@@ -274,8 +276,8 @@ inF=f;inX=sx;boostOn=boost>1;
 if(kid){rotV.y+=-sx*.07*dt;rotV.x+=up*.05*dt;vel.addScaledVector(tmpV.set(0,0,-Math.max(f,-.3)).multiplyScalar(60*boost*spMul).applyQuaternion(ship.quaternion),dt);} // kid flight: left/right = turn, forward only
 else vel.addScaledVector(tmpV.set(sx,up,-f).multiplyScalar(60*boost).applyQuaternion(ship.quaternion),dt);}
 rotV.multiplyScalar(Math.pow(.02,dt));vel.multiplyScalar(Math.pow(.45,dt));
-ship.quaternion.multiply(q.setFromEuler(e3.set(rotV.x,rotV.y,rotV.z)));ship.position.addScaledVector(vel,dt);
-const s=auto?game.speed:vel.length(),sw=Math.min(s/400,1);if(!window.__dbg?.freeze&&!game.api_eva())cam.position.set(Math.sin(t*1.7)*.15*sw,Math.sin(t*2.3)*.12*sw,0);if(!window.__dbg?.freeze&&!game.api_eva())cam.rotation.z=Math.sin(t*.9)*.01*sw;cam.fov=70+sw*8;cam.updateProjectionMatrix();
+ship.quaternion.multiply(q.setFromEuler(e3.set(rotV.x,rotV.y,rotV.z)));ship.position.addScaledVector(vel,dt);if(!auto)for(let i=0;i<7;i++){const b=bodyDefs[i];b[0].getWorldPosition(colV);const mn=b[3]*1.12+6;colD.subVectors(ship.position,colV);const d=colD.length();if(d<mn){ship.position.copy(colV).addScaledVector(colD.normalize(),mn);vel.addScaledVector(colD,-Math.min(0,vel.dot(colD)));}}
+const s=auto?game.speed:vel.length(),sw=Math.min(s/400,1);if(!window.__dbg?.freeze&&!game.api_eva())cam.position.set(Math.sin(t*1.7)*.15*sw,Math.sin(t*2.3)*.12*sw,0);if(!window.__dbg?.freeze&&!game.api_eva())cam.rotation.z=Math.sin(t*.9)*.01*sw;{const sk=game.shake();if(sk>0&&!game.api_eva()){cam.position.x+=(Math.random()-.5)*sk;cam.position.y+=(Math.random()-.5)*sk;cam.rotation.z+=(Math.random()-.5)*sk*.06;}}cam.fov=70+sw*8;cam.updateProjectionMatrix();
 const P=dg.attributes.position.array,o=ship.position;for(let i=0;i<DN*3;i+=3)for(let j=0;j<3;j++){const c=o.getComponent(j);let v=P[i+j];if(v-c>DR)v-=2*DR;else if(v-c<-DR)v+=2*DR;P[i+j]=v;}
 dg.attributes.position.needsUpdate=true;starG.position.copy(o);
 fpsShow+=((1/Math.max(dt,1e-3))-fpsShow)*.05;fwd.set(0,0,-1).applyQuaternion(ship.quaternion);
