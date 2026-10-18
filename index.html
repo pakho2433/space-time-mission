@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="zh-HK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="icon" href="data:,"><title>太空時間任務 —— 學習「秒」</title><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:"PingFang HK","Noto Sans TC","Noto Sans CJK TC","Microsoft JhengHei",sans-serif;color:#2b3550;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+/* ---------- title / loading ---------- */
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#1b2a6bcc,#050816ee);z-index:10;text-align:center;color:#fff;padding:16px;box-sizing:border-box}
+body:not(.ready) #start{background:radial-gradient(#14205a,#03050f)}
+#orb{font-size:64px;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 0 18px #6cf8)}@keyframes bob{50%{transform:translateY(-10px) rotate(-6deg)}}
+#start h1{font-size:clamp(34px,7vw,60px);margin:.15em 0 .1em;letter-spacing:.08em;background:linear-gradient(90deg,#ffd86b,#ff8fb1,#8fd3ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900}
+#start .sub1{font-size:clamp(17px,3.2vw,22px);opacity:.92;margin:0 0 18px}
+#gname{font:inherit;font-size:20px;padding:12px 18px;border-radius:16px;border:3px solid #8fd3ff;width:min(300px,80vw);text-align:center;outline:none;background:#ffffffee;color:#2b3550;user-select:text;-webkit-user-select:text}
+#bar{width:min(300px,70vw);height:6px;background:#ffffff22;border-radius:3px;margin:16px auto 6px;overflow:hidden}#prog{height:100%;width:0;background:linear-gradient(90deg,#ffd86b,#ff8fb1);transition:width .3s}
+#progtx{font-size:13px;opacity:.7;min-height:1em}
+.link{background:none;border:none;color:#bfe3ff;text-decoration:underline;font:inherit;font-size:15px;margin-top:10px;cursor:pointer;padding:8px}
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-size:clamp(19px,2.6vw,23px);font-weight:700;border:none;border-radius:18px;padding:14px 20px;min-height:60px;cursor:pointer;color:#2b3550;background:#fff;box-shadow:0 5px 0 #0002;transition:transform .08s,box-shadow .08s;touch-action:manipulation}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #0002}
+.btn.go{background:linear-gradient(180deg,#ffd86b,#ffb020);color:#4a2c00;width:100%;margin-top:10px}
+.btn.big{font-size:clamp(22px,3.4vw,28px);padding:16px 40px;width:auto;margin-top:16px}
+.btn.alt{background:linear-gradient(180deg,#a8e6ff,#5bbcff);color:#06324f;width:100%}
+.btn:disabled{opacity:.4}
+/* ---------- in-game HUD ---------- */
+#ghud{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:none;align-items:center;gap:10px;pointer-events:none;max-width:98vw}
+#gstars{background:#fff;border-radius:20px;padding:6px 14px;font-weight:900;font-size:20px;box-shadow:0 3px 0 #0003;white-space:nowrap}
+#gsteps{display:flex;align-items:center;background:#ffffffdd;border-radius:22px;padding:6px 12px;box-shadow:0 3px 0 #0003}
+.dot{position:relative;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#e7ecf7;flex:none}
+.dot em{position:absolute;top:36px;font-style:normal;font-size:12px;white-space:nowrap;color:#fff;text-shadow:0 1px 3px #000;font-weight:700}
+.dot.done{background:#5ed38a;color:#fff;font-weight:900}.dot.now{background:#ffd86b;box-shadow:0 0 0 4px #ffd86b66;animation:pulse 1.2s infinite}@keyframes pulse{50%{box-shadow:0 0 0 8px #ffd86b33}}
+.ln{width:16px;height:4px;background:#cfd8ea;border-radius:2px;flex:none}
+#corner{position:fixed;top:8px;right:8px;z-index:7;display:flex;gap:6px}
+#corner button,#q{font:inherit;font-size:13px;background:#ffffffcc;border:none;border-radius:14px;padding:6px 10px;cursor:pointer;color:#2b3550}
+/* ---------- mission panel: compact translucent hologram glass ---------- */
+#panel{position:fixed;z-index:5;display:none;right:14px;top:78px;width:min(440px,37vw);max-height:calc(100% - 94px);overflow-y:auto;-webkit-overflow-scrolling:touch;
+ background:linear-gradient(160deg,rgba(40,70,140,.50),rgba(14,22,58,.58));color:#f2f6ff;border:2px solid rgba(150,215,255,.55);border-radius:24px;
+ box-shadow:0 0 24px rgba(90,180,255,.35),inset 0 0 30px rgba(120,200,255,.12);padding:14px 16px;box-sizing:border-box;touch-action:pan-y}
+#panel.show{display:block;animation:pop .3s cubic-bezier(.3,1.5,.6,1)}@keyframes pop{from{transform:scale(.9);opacity:0}}
+#panel.small{width:min(360px,34vw)}
+#panel.wide{right:50%;transform:translateX(50%);width:min(760px,94vw);top:66px;animation:none;background:linear-gradient(160deg,rgba(40,70,140,.82),rgba(14,22,58,.88))}
+#panel h2{margin:.15em 0;font-size:clamp(22px,2.8vw,28px);color:#ffe28a}#panel h3{margin:.3em 0;font-size:20px;color:#ffe28a}
+.big{font-size:50px;text-align:center}
+.sub{color:#b9c8ea;font-size:15px;margin:.3em 0}
+.intro{text-align:center}.badge{display:inline-block;background:#ff8fb1;color:#fff;font-weight:900;border-radius:14px;padding:3px 14px;font-size:17px}
+.intro p{font-size:19px;margin:.4em 0}
+.qhead{display:flex;justify-content:space-between;font-size:15px;color:#9fdcff;font-weight:800;margin-bottom:4px}
+.prompt{font-size:clamp(19px,2.2vw,22px);line-height:1.45;margin:.2em 0 .5em;font-weight:700}
+.prompt b,.fb b,.tbox b{color:#ffd86b}
+.cbox{display:flex;justify-content:center;margin:2px 0 6px}.clock{width:min(190px,40vw,30vh);height:auto;filter:drop-shadow(0 0 10px #8fd3ff88)}.clock.big{width:min(220px,46vw,32vh)}
+.hand{cursor:pointer}
+.opts{display:flex;flex-direction:column;gap:9px}.opts.two{flex-direction:row}.opts.two .btn{flex:1}.opts.row3{flex-direction:row}.opts.row3 .btn{flex:1;padding:12px 6px}
+.opts.four{flex-direction:row;flex-wrap:wrap}.opts.four .btn{flex:1 1 40%}
+.opt{text-align:left;padding-left:18px;background:rgba(255,255,255,.92)}
+.right{background:#5ed38a!important;color:#fff!important}.wrong{background:#ff7a8a!important;color:#fff!important;animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.fb{margin-top:10px;border-radius:16px;padding:10px 14px;font-size:18px;line-height:1.45}.fb>b{font-size:21px}.fb p{margin:.25em 0}
+.fb.good{background:rgba(60,190,110,.30);border:2px solid #7be495}.fb.bad{background:rgba(255,170,40,.25);border:2px solid #ffb020}
+/* drag pieces */
+.slots,.buckets{display:flex;gap:10px;margin:6px 0}.slot,.bucket{flex:1;min-height:110px;border:3px dashed rgba(170,220,255,.7);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:6px 4px;background:rgba(255,255,255,.08);text-align:center}
+.slot b,.bucket b{font-size:22px}.slot small,.bucket small{font-size:13px;color:#b9c8ea}.slot.ok{border-style:solid;border-color:#7be495;background:rgba(90,210,130,.18)}
+.tray{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;min-height:70px;margin:8px 0;padding:6px;border-radius:16px;background:rgba(0,0,0,.18)}
+.piece{width:58px;height:96px;background:#fffaf0;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:grab;box-shadow:0 4px 0 #0004;position:relative;z-index:2}
+.piece svg{width:30px;height:90px}.piece.dragging,.card.dragging,.sat.dragging{z-index:50;box-shadow:0 10px 20px #0006;cursor:grabbing}.piece.placed{margin-top:6px;width:44px;height:70px;box-shadow:none}
+.cards{gap:8px}.card{background:#fff;color:#2b3550;border-radius:14px;padding:10px 12px;font-size:18px;font-weight:800;cursor:grab;box-shadow:0 4px 0 #0004;position:relative;z-index:2}
+.card.sel{outline:4px solid #ffd86b}.card.placed{font-size:14px;padding:5px 8px;margin:3px;box-shadow:none}.bucket{min-height:120px}
+.readout{text-align:center;font-size:19px;margin:2px 0 4px}.readout b{color:#ffd86b;font-size:24px}
+.fuelrow{display:flex;align-items:center;justify-content:center;gap:16px}.tank{position:relative;width:54px;height:170px;border:3px solid #8fd3ff;border-radius:16px;overflow:hidden;background:rgba(0,0,0,.25)}
+.tank i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,#ff8a00,#ffd86b);transition:height .1s}.tank span{position:absolute;inset:auto 0 6px;text-align:center;font-weight:900;font-size:13px;color:#fff;text-shadow:0 1px 2px #000}
+.match{display:flex;gap:12px}.match>div{flex:1;display:flex;flex-direction:column;gap:8px}.mt{background:rgba(255,255,255,.92);font-size:18px;padding:10px 8px;min-height:52px}.mt.sel{outline:4px solid #ffd86b}
+/* stopwatch */
+.sw{display:flex;align-items:center;justify-content:center;gap:14px;margin:4px 0 8px;position:relative}.sw.small{margin:4px 0}
+.swdial{position:relative}.swdial .clock{width:min(160px,36vw,24vh)}.swdial .cover{display:none;position:absolute;inset:0;border-radius:50%;background:#5b6ccf;color:#fff;font-size:22px;font-weight:900;align-items:center;justify-content:center;text-align:center;line-height:1.3}
+.swdial.blind .cover{display:flex}
+.swnum{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:clamp(28px,3.4vw,40px);font-weight:900;background:rgba(10,16,40,.85);color:#7dffb0;border-radius:14px;padding:8px 14px;min-width:4.8em;text-align:center;border:2px solid #7dffb055}
+.swnum.blind{color:transparent;text-shadow:0 0 18px #7dffb088}.flame{position:absolute;right:4px;bottom:-6px;font-size:40px;opacity:0;transition:.3s}.flame.on{opacity:1;transform:scale(1.4)}
+.btn.start{background:linear-gradient(180deg,#7be495,#3cbf65);color:#fff}.btn.stop{background:linear-gradient(180deg,#ff8c9c,#f2506a);color:#fff}
+.suit{position:relative;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);border-radius:16px;padding:8px 12px}.astro{font-size:66px;line-height:1}
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1}.parts span{background:rgba(255,255,255,.12);border-radius:10px;padding:5px 6px;font-size:16px;opacity:.35;transition:.3s}.parts span.on{opacity:1;background:rgba(90,210,130,.35)}
+.call{position:absolute;right:10px;top:-14px;background:#5b6ccf;color:#fff;font-weight:900;border-radius:12px;padding:3px 12px;font-size:18px}.call.go{background:#3cbf65;font-size:24px;animation:pulse 0.6s infinite}.call.done{background:#ffb020}
+.pick{display:inline-flex;align-items:center;gap:8px}.pick .pm{min-height:48px;width:52px;padding:0;font-size:26px}.pv{font-size:22px;font-weight:800;min-width:5.2em;text-align:center}.pv b{color:#ffd86b;font-size:28px}
+.sheet,.board{background:rgba(255,255,255,.12);border-radius:16px;padding:10px 12px;font-size:18px;margin:6px 0}
+.board>div:first-child{font-weight:900;color:#ffd86b;margin-bottom:4px}.board .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #ffffff33}.board .row.me{border:none}
+/* race */
+.track{position:relative;background:linear-gradient(180deg,rgba(80,40,120,.45),rgba(30,20,60,.45));border-radius:16px;padding:20px 8px 6px}
+.lane{position:relative;height:40px;border-bottom:2px dashed #ffffff33}.lane .nm{position:absolute;left:2px;top:10px;font-size:12px;color:#b9c8ea}.runner{position:absolute;left:8%;top:2px;font-size:30px;transition:left .05s linear;transform:scaleX(-1)}.fin{position:absolute;right:2%;top:4px;font-size:26px}
+.track .call{top:-8px}
+.tempt{position:relative}.tbox{margin-top:8px;background:rgba(255,240,200,.95);color:#4a2c00;border-radius:16px;padding:10px 14px;font-size:18px;border:3px solid #ffb020;animation:pop .3s}.tbox .who{font-weight:900}.tbox b{color:#d33}
+.tbox .opt{background:#fff;font-size:18px}
+.story4{display:grid;grid-template-columns:1fr 1fr;gap:8px}.scard{font:inherit;position:relative;border:none;border-radius:16px;background:rgba(255,255,255,.92);color:#2b3550;padding:10px 8px 8px;font-size:15px;line-height:1.35;cursor:pointer;text-align:center;box-shadow:0 4px 0 #0003}
+.scard .em{display:block;font-size:34px}.scard .n{position:absolute;left:8px;top:6px;background:#5b6ccf;color:#fff;border-radius:50%;width:22px;height:22px;font-size:13px;line-height:22px;font-weight:900}.scard b{color:#d33}
+/* beidou */
+.orbit{position:relative;width:min(260px,62vw,34vh);aspect-ratio:1;margin:0 auto}.orb-ring{position:absolute;inset:6%;border:3px dashed #8fd3ff88;border-radius:50%}.earth{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:72px}
+.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.links line,.links polyline{stroke:#7dffb0;stroke-width:1.2;fill:none;opacity:0;stroke-dasharray:3 2}.links .on{opacity:1}
+.oslot{position:absolute;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;border:3px dashed #ffd86b;background:rgba(255,216,107,.15);display:flex;align-items:center;justify-content:center;animation:pulse 1.2s infinite}.oslot.full{border-style:solid;border-color:#7dffb0;animation:none}
+.sat{font-size:40px;cursor:grab;position:relative;z-index:2;width:62px;height:62px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);border-radius:50%}.sat.placed{background:none}
+.sync{display:flex;gap:10px;margin:4px 0 10px}.clk{flex:1;background:rgba(10,16,40,.8);border-radius:16px;padding:8px;text-align:center;border:2px solid #8fd3ff66}.clk small{display:block;font-size:14px;color:#b9c8ea}
+.clk b{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:clamp(24px,3vw,32px);color:#7dffb0}.clk.sh b{color:#ff9aa8}.clk.sh.ok b{color:#7dffb0}.clk span{display:block;font-size:15px;font-weight:800;color:#ffd86b}
+/* result */
+.result{text-align:center}.score{font-size:30px;font-weight:900;margin:.1em 0 .3em}
+.skills{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:8px 0}
+.sk{display:flex;justify-content:space-between;border-radius:14px;padding:8px 12px;font-size:17px;font-weight:700}.sk.g{background:rgba(90,210,130,.28)}.sk.w{background:rgba(255,170,40,.28)}
+.ai,.selfev{text-align:left;background:rgba(255,255,255,.1);border-radius:16px;padding:8px 14px;margin:8px 0;font-size:17px;line-height:1.5}.ai ul{margin:.2em 0;padding-left:1.2em}
+.se{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed #ffffff33;gap:8px}
+.faces button{font-size:26px;background:rgba(255,255,255,.15);border:none;border-radius:12px;margin-left:4px;padding:3px 8px;cursor:pointer;opacity:.6}.faces button.on{opacity:1;background:#ffd86b;transform:scale(1.1)}
+/* flight guidance */
+#flyhint{display:none;position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:5;background:rgba(14,22,58,.6);border:2px solid rgba(150,215,255,.5);color:#fff;border-radius:18px;padding:8px 16px;font-size:clamp(15px,2vw,19px);text-align:center;max-width:92vw;pointer-events:none}
+#flyhint b{color:#ffd86b}#flyhint .y{color:#ffd86b;font-weight:900}#flyhint .c{color:#8fe3ff;font-weight:900}#flyhint .ctl{display:block;font-size:14px;color:#b9c8ea;margin-top:2px}
+#navarrow{display:none;position:fixed;z-index:4;width:0;height:0;pointer-events:none}#navarrow i{position:absolute;left:-30px;top:-30px;width:60px;height:60px;display:block}
+#navarrow i:before{content:"";position:absolute;left:14px;top:12px;border-left:38px solid #ffd86b;border-top:18px solid transparent;border-bottom:18px solid transparent;filter:drop-shadow(0 0 8px #ffb020)}
+#navarrow span{position:absolute;left:-40px;top:30px;width:80px;text-align:center;color:#ffd86b;font-weight:900;font-size:15px;text-shadow:0 1px 3px #000}
+#navmark{display:none;position:fixed;z-index:4;width:0;height:0;pointer-events:none}#navmark:before{content:"";position:absolute;left:-34px;top:-34px;width:60px;height:60px;border:4px solid #ffd86b;border-radius:50%;animation:pulse 1s infinite}
+#navmark span{position:absolute;left:-70px;top:34px;width:140px;text-align:center;color:#ffd86b;font-weight:900;font-size:15px;text-shadow:0 1px 3px #000}
+#autonav{display:none;position:fixed;z-index:6;left:50%;bottom:20px;transform:translateX(-50%);width:auto;font-size:18px;min-height:50px}
+body.kidfly #bBoost{width:96px;height:96px;font-size:22px;font-weight:900;background:#ffb020cc;border-color:#fff;right:28px!important;bottom:28px!important}
+body.kidfly #joy{width:150px;height:150px}body.kidfly #knob{left:50px;top:50px;width:50px;height:50px;background:#ffd86bcc}
+/* free flight */
+#ret{display:none}body.free #ret{display:block}
+#freehint{display:none;position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:4;color:#cfeaff;font-size:13px;text-shadow:0 1px 3px #000;pointer-events:none;text-align:center}
+.tb{position:fixed;z-index:4;display:none;width:68px;height:68px;border-radius:50%;border:2px solid #6cf8;background:#1a305088;color:#fff;font-size:15px;align-items:center;justify-content:center;user-select:none}
+#joy{position:fixed;left:30px;bottom:30px;width:120px;height:120px;border-radius:50%;border:2px solid #6cf8;z-index:4;display:none}
+#knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#6cf8}
+#credit{position:fixed;left:8px;bottom:3px;z-index:3;font-size:9px;color:#fff;opacity:.4;pointer-events:none}
+/* portrait phones / narrow: compact bottom sheet */
+@media (max-aspect-ratio:4/5),(max-width:640px){
+ #panel,#panel.small{left:8px;right:8px;width:auto;top:auto;bottom:8px;max-height:56%;padding:12px 12px;border-radius:20px}
+ #panel.wide{left:8px;right:8px;width:auto;transform:none;top:58px;max-height:none;bottom:8px}
+ .dot{width:28px;height:28px;font-size:15px}.dot em{display:none}.ln{width:8px}#gstars{font-size:17px}
+ #corner{top:52px}#flyhint{top:96px;font-size:14px}
+ .clock{width:min(150px,40vw,20vh)}.clock.big{width:min(170px,44vw,22vh)}.swdial .clock{width:min(120px,32vw)}.swnum{font-size:26px;min-width:4.4em;padding:6px 8px}
+ .slot,.bucket{min-height:84px}.piece{width:48px;height:80px}.astro{font-size:50px}.orbit{width:min(200px,54vw,24vh)}.earth{font-size:54px}
+ .prompt{font-size:18px}.btn{min-height:52px;font-size:18px}
+}
+</style>
+<script type="importmap">{"imports":{"three":"./lib/three.module.min.js","three/addons/":"./lib/addons/"}}</script>
+<link rel="modulepreload" href="lib/three.module.min.js"><link rel="modulepreload" href="main.js"><link rel="modulepreload" href="game.js">
+</head><body>
+<div id="start"><div id="orb">🚀</div><h1>太空時間任務</h1><p class="sub1">和「秒」一起去太空冒險！⏱️</p>
+<input id="gname" maxlength="12" placeholder="你的名字（可不填）" autocomplete="off">
+<button class="btn go big" id="gbtn">開始任務 🚀</button>
+<div id="bar"><div id="prog"></div></div><div id="progtx">載入中…</div>
+<button class="link" id="gfree">自由飛行模式</button></div>
+<svg id="ret" viewBox="0 0 200 200" style="position:fixed;left:50%;top:50%;width:200px;height:200px;margin:-100px 0 0 -100px;z-index:3;pointer-events:none"><g stroke="#8df" stroke-opacity=".6" fill="none" stroke-width="1.5"><circle cx="100" cy="100" r="14"/><path d="M100,72v14M100,114v14M72,100h14M114,100h14"/></g></svg>
+<div id="ghud"><div id="gstars">⭐ 0</div><div id="gsteps"></div></div>
+<div id="corner"><button id="gmute">🔊</button><button id="q">畫質</button></div>
+<div id="panel"></div>
+<div id="flyhint"></div><div id="navarrow"><i></i><span></span></div><div id="navmark"><span></span></div><button class="btn go" id="autonav">🧭 需要幫忙？自動導航</button>
+<div id="freehint">電腦：點一下畫面，再用 WASD 移動・滑鼠看四周・Shift 加速・Q/E 翻滾・Esc 放開滑鼠<br>平板／手機：左邊搖桿移動・拖右邊畫面轉視角</div>
+<div id="credit">貼圖：three.js examples (MIT)・Planet Pixel Emporium via threex.planets・銀河背景：程序生成</div>
+<div id="speed" style="display:none"></div>
+<div id="joy"><div id="knob"></div></div>
+<div class="tb" id="bUp" style="right:30px;bottom:110px">上升</div>
+<div class="tb" id="bBoost" style="right:110px;bottom:30px">加速</div>
+<div class="tb" id="bDown" style="right:30px;bottom:30px">下降</div>
+<script type="module" src="main.js"></script></body></html>
