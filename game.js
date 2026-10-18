@@ -162,7 +162,8 @@ function briefing(){const s=STATIONS[G.si];api.setMission(`飛往 ${s.name}`);
 function arrive(){mode.m='mission';const s=STATIONS[G.si];G.tasks=stationTasks(G.si);G.ti=0;api.setMission(`第${G.si+1}站 ${s.name}`);G.f0=G.fuel;
  showPanel(`<div class="intro"><div class="badge">到站了！</div><h2>${s.emoji} 歡迎來到${s.name}</h2><p>今次有 <b>${G.tasks.length}</b> 個任務，完成就有 ⭐！</p><button class="btn go" id="b_go">開始任務 ▶</button></div>`,'small');
  $('#b_go').onclick=()=>{SFX.click();runTask();};}
-function head(t){const s=STATIONS[G.si];return `<div class="qhead"><span>${s.emoji} ${t.title}</span><span>${G.ti+1} / ${G.tasks.length}</span></div>`;}
+const TITLE={mc:'快問快答',fix:'修理太空鐘',find:'時鐘內找秒針',rock:'隕石分類',drag:'撥秒針',track:'秒針追蹤',spin:'一分鐘燃料',match:'記憶翻牌',watch:'引擎點火',suit:'太空人穿太空衣',record:'記錄成績',beat:'拍拍節拍',replay:'秒針重播',lcd:'秒錶讀數',endpos:'找結束時間',podium:'頒獎台',race:'誠實計時員',board:'記分牌',judge:'公平裁判',orbit:'北斗衛星上軌道',sync:'北斗授時',navi:'北斗導航'};
+function head(t){const s=STATIONS[G.si];return `<div class="qhead"><span>${s.emoji} ${/^[\x00-\x7f]*$/.test(t.title||'')?(TITLE[t.kind]||'太空任務'):t.title}</span><span>${G.ti+1} / ${G.tasks.length}</span></div>`;}
 // task harness: render(t, done) ; done(firstTryOk) ; mistakes tracked with t.miss
 function runTask(){if(G.ti>=G.tasks.length)return stationDone();const t=G.tasks[G.ti];t.miss=0;t.finished=false;(R[t.kind])(t);}
 function miss(t,msg){t.miss++;SFX.no();fb(`<div class="fb bad"><b>再試一次 🤔</b><p>${msg}</p></div>`);}
@@ -605,6 +606,7 @@ R.endpos=t=>{const s0=ri(0,11)*5,d=pick([10,15,20,25,30,35,40]),s1=(s0+d)%60,m=r
  dragHand(svg,(kk,c)=>{k=kk;cum=c;arcFrom(svg,s0,Math.min(59,c));$('#cnt').textContent=Math.min(59,c);},s0);
  $('#b_ok').onclick=()=>{if(t.finished)return;if(k===s1)finish(t,`由開始走 ${d} 小格，秒針停在 ${s1===0?60:s1} 秒的位置。`);else miss(t,`現在走了 ${cum} 秒，要走 ${d} 秒。${cum<d?'再多走一點。':'走多了。'}`);};};
 // (c) 頒獎台
+document.addEventListener('pointerup',e=>{const z=document.querySelector('.kid .pair.zoom');if(z){z.classList.remove('zoom');return;}const p=e.target.closest&&e.target.closest('.kid .pair');if(p){p.classList.add('zoom');tone(700,.06);}});
 R.podium=t=>{const names=shuffle([['子賢','👦'],['心悅','👧'],['詠欣','🧒']]);let ds=[];while(ds.length<3){const d=ri(3,11)*5-ri(0,2);if(!ds.includes(d)&&ds.every(x=>Math.abs(x-d)>=3))ds.push(d);}const m=ri(0,59),h=ri(1,12);
  const P=names.map((n,i)=>{const d=ds[i],dig=i===1;const s0=dig?0:ri(0,11)*5;return {n:n[0],e:n[1],d,dig,s0,s1:(s0+d)%60,ok:false,v:Math.max(1,d+pick([-7,-5,5,7]))};});
  showPanel(`${head(t)}<p class="prompt">🏆 三位小朋友寫數字 1 至 30。先算出各人<b>用了多少秒</b>，再把他們拖上頒獎台（<b>用時最短</b>是第 1 名）！</p>
