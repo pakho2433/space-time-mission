@@ -53,15 +53,16 @@ const MC={hand:[['時鐘上哪一支針走得<b>最快</b>？',['秒針','分針
 const mcTask=(skill,pool)=>{const [p,o,e]=pick(MC[pool]);return {kind:'mc',skill,title:'快問快答',prompt:p,opts:o,explain:e};};
 
 const STATIONS=[{name:'秒針星',emoji:'🪐',task:'認識秒針',key:'venus'},{name:'讀秒星',emoji:'🔴',task:'看鐘讀秒',key:'mars'},{name:'秒錶站',emoji:'⏱️',task:'秒錶計時',key:'jupiter'},
- {name:'計時星',emoji:'🔵',task:'計算用了多少秒',key:'neptune'},{name:'誠信星',emoji:'🤝',task:'誠實與公平',key:'saturn'},{name:'北斗站',emoji:'🛰️',task:'北斗衛星與時間',key:'beidou'}];
+ {name:'誠信星',emoji:'🤝',task:'誠實計時',key:'saturn'},{name:'計時星',emoji:'🔵',task:'計算用了多少秒',key:'neptune'},{name:'北斗站',emoji:'🛰️',task:'北斗衛星與時間',key:'beidou'}];
 function stationTasks(i){
- if(i===0)return shuffle([{kind:'fix',skill:'hand',title:'修理太空鐘'},{kind:'find',skill:'hand',title:'時鐘內找秒針'},{kind:'rock',skill:'unit',title:'隕石分類'}]);
- if(i===1){const a=ri(2,11)*5,b=pick([3,7,13,18,22,28,33,41,47,52,56]);return [{kind:'drag',skill:'read',title:'撥秒針',target:a},{kind:'track',skill:'read',title:'秒針追蹤'},{kind:'drag',skill:'read',title:'撥秒針',target:b},...shuffle([{kind:'spin',skill:'relation',title:'一分鐘燃料'},{kind:'match',skill:'relation',title:'記憶翻牌'}])];}
- if(i===2)return [{kind:'watch',skill:'watch',title:'引擎點火',mode:'look',target:ri(5,8)},{kind:'suit',skill:'watch',title:'太空人穿太空衣'},{kind:'record',skill:'watch',title:'記錄成績'},{kind:'beat',skill:'estimate',title:'拍拍節拍'}];
- if(i===3)return [{kind:'replay',skill:'calc',title:'秒針重播'},{kind:'lcd',skill:'calc',title:'秒錶讀數'},{kind:'endpos',skill:'calc',title:'找結束時間'},{kind:'podium',skill:'calc',title:'頒獎台'}];
- if(i===4)return [{kind:'race',skill:'honest',title:'誠實計時員'},{kind:'board',skill:'honest',title:'記分牌'},{kind:'judge',skill:'honest',title:'公平裁判'}];
- return [{kind:'orbit',skill:'beidou',title:'北斗衛星上軌道'},...shuffle([{kind:'sync',skill:'beidou',title:'北斗授時'},{kind:'navi',skill:'beidou',title:'北斗導航'}])];}
-const SKILL={hand:'辨認秒針',read:'看鐘讀秒',relation:'秒和分鐘的關係',unit:'選擇時間單位',watch:'秒錶計時',calc:'計算用了多少秒',estimate:'估計與實測',honest:'誠實與公平',beidou:'北斗衛星（國安）'};
+ // difficulty rises through the journey (1 easiest → 5 hardest)
+ if(i===0)return [{kind:'find',skill:'hand',title:'時鐘內找秒針',lv:1},{kind:'fix',skill:'hand',title:'修理太空鐘',lv:1},{kind:'rock',skill:'unit',title:'隕石分類',lv:2}];
+ if(i===1){const a=ri(2,11)*5,b=pick([3,7,13,18,22,28,33,41,47,52,56]);return [{kind:'track',skill:'read',title:'秒針追蹤',lv:2},{kind:'drag',skill:'read',title:'撥秒針',target:a,lv:2},{kind:'match',skill:'relation',title:'記憶翻牌',lv:2},{kind:'drag',skill:'read',title:'撥秒針（挑戰）',target:b,lv:3},{kind:'spin',skill:'relation',title:'一分鐘燃料',lv:3}];}
+ if(i===2)return [{kind:'watch',skill:'watch',title:'引擎點火',mode:'look',target:ri(5,8),lv:3},{kind:'suit',skill:'watch',title:'太空人穿太空衣',lv:3},{kind:'beat',skill:'estimate',title:'拍拍節拍',lv:3},{kind:'record',skill:'watch',title:'記錄成績',lv:4}];
+ if(i===3)return [{kind:'race',skill:'honest',title:'誠實計時員',lv:4},{kind:'board',skill:'honest',title:'記分牌',lv:4},{kind:'judge',skill:'honest',title:'公平裁判',lv:4}];
+ if(i===4)return [{kind:'lcd',skill:'calc',title:'秒錶讀數',lv:4},{kind:'replay',skill:'calc',title:'秒針重播',lv:4},{kind:'endpos',skill:'calc',title:'找結束時間',lv:5},{kind:'podium',skill:'calc',title:'頒獎台',lv:5}];
+ return [{kind:'orbit',skill:'beidou',title:'北斗衛星上軌道',lv:3},{kind:'navi',skill:'beidou',title:'北斗導航',lv:4},{kind:'sync',skill:'beidou',title:'北斗授時',lv:5}];}
+const SKILL={hand:'① 辨認秒針',unit:'① 選擇時間單位',read:'② 看鐘讀秒',relation:'② 秒和分鐘的關係',watch:'③ 秒錶計時',estimate:'③ 估計與實測',honest:'④ 誠實計時',calc:'⑤ 計算用了多少秒',beidou:'⑥ 北斗衛星（國安）'};
 const TIP={hand:'秒針是最幼、最長、走得最快的紅色針。',read:'由 12 開始數小格，1 小格就是 1 秒；每個數字之間有 5 小格。',relation:'60 秒 = 1 分鐘，秒針走一圈就是 60 秒。',
  unit:'很短的事情（眨眼、拍手）用「秒」；較長的事情（吃飯、上課）用「分鐘」。',watch:'聽到「開始」才按開始，完成動作才按停止，記錄「約＿秒」。',estimate:'估計的時間和實際量度可能不同，要用秒錶量度才準確。',calc:'由開始到結束，數秒針走了多少小格；秒錶就用結束減開始。用的秒數越少越快。',honest:'計時要誠實，提早按停會令成績不可信，對別人不公平。',beidou:'北斗由中國自主建設，提供定位、導航和授時（準確時間）。'};
 
@@ -100,6 +101,7 @@ const nav={key:null,t:0,start:new THREE.Vector3(),dist0:1,lastUi:0};
 function glideTo(key,dur){fly.on=true;fly.t=0;fly.key=key;fly.docked=null;fly.dur=dur;fly.p0.copy(ship.position);fly.q0.copy(ship.quaternion);}
 const arrow=$('#navarrow'),mark=$('#navmark'),flyhint=$('#flyhint'),autoBtn=$('#autonav');
 function update(dt){
+ if(mode.m!=='fly'&&fireBtn.style.display!=='none'){fireBtn.style.display='none';firing=false;}
  gems.forEach(g=>{g.rotation.y+=dt*2;g.rotation.x+=dt;});
  if(fly.on){fly.t+=dt;const u=Math.min(1,fly.t/fly.dur),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;standoff(fly.key,tP,tL);
   const mid=fly.p0.clone().lerp(tP,.5).addScaledVector(up,fly.p0.distanceTo(tP)*.1);
@@ -163,11 +165,11 @@ function arrive(){mode.m='mission';const s=STATIONS[G.si];G.tasks=stationTasks(G
  showPanel(`<div class="intro"><div class="badge">到站了！</div><h2>${s.emoji} 歡迎來到${s.name}</h2><p>今次有 <b>${G.tasks.length}</b> 個任務，完成就有 ⭐！</p><button class="btn go" id="b_go">開始任務 ▶</button></div>`,'small');
  $('#b_go').onclick=()=>{SFX.click();runTask();};}
 const TITLE={mc:'快問快答',fix:'修理太空鐘',find:'時鐘內找秒針',rock:'隕石分類',drag:'撥秒針',track:'秒針追蹤',spin:'一分鐘燃料',match:'記憶翻牌',watch:'引擎點火',suit:'太空人穿太空衣',record:'記錄成績',beat:'拍拍節拍',replay:'秒針重播',lcd:'秒錶讀數',endpos:'找結束時間',podium:'頒獎台',race:'誠實計時員',board:'記分牌',judge:'公平裁判',orbit:'北斗衛星上軌道',sync:'北斗授時',navi:'北斗導航'};
-function head(t){const s=STATIONS[G.si];return `<div class="qhead"><span>${s.emoji} ${/^[\x00-\x7f]*$/.test(t.title||'')?(TITLE[t.kind]||'太空任務'):t.title}</span><span>${G.ti+1} / ${G.tasks.length}</span></div>`;}
+function head(t){const s=STATIONS[G.si];return `<div class="qhead"><span>${s.emoji} ${/^[\x00-\x7f]*$/.test(t.title||'')?(TITLE[t.kind]||'太空任務'):t.title}</span><span>${t.lv?'<i class="lvst">'+'★'.repeat(t.lv)+'</i> ':''}${G.ti+1} / ${G.tasks.length}</span></div>`;}
 // task harness: render(t, done) ; done(firstTryOk) ; mistakes tracked with t.miss
 function runTask(){if(G.ti>=G.tasks.length)return stationDone();const t=G.tasks[G.ti];t.miss=0;t.finished=false;(R[t.kind])(t);}
 function miss(t,msg){t.miss++;SFX.no();fb(`<div class="fb bad"><b>再試一次 🤔</b><p>${msg}</p></div>`);}
-function fb(h){const f=$('#fb');if(f){f.innerHTML=h;}}
+function fb(h){const f=$('#fb');if(f){f.innerHTML=h;if(h)requestAnimationFrame(()=>{try{f.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(_){}});}}
 function finish(t,msg,ok=true){if(t.finished)return;t.finished=true;const st=G.stat[t.skill]||(G.stat[t.skill]=[0,0]);st[1]++;G.max++;const star=ok&&t.miss===0;if(star){st[0]++;G.stars++;}
  SFX[star?'ok':'click']();renderHud();setTimeout(()=>burst($('#fb'),star?['⭐','✨','🎉','💫']:['👍','✨']),30);const per=(100-(G.f0??G.fuel))/G.tasks.length,lastT=G.ti>=G.tasks.length-1,gain=Math.round(lastT?Math.max(4,100-G.fuel):Math.max(4,per*(star?1.15:.8)));setTimeout(()=>addFuel(gain,$('#fb')),250);
  fb(`<div class="fb good"><b>${star?'完成！⭐ +1':'完成了！👍'}</b><span class="fadd">⛽ +${gain}</span><p>${msg}</p><button class="btn go" id="b_n">下一個任務 ▶</button></div>`);
@@ -244,7 +246,7 @@ R.suit=t=>{const T=ri(6,9);const parts=['👕 太空衣','🧤 手套','👢 靴
  <div class="sw small"><div class="swnum" id="swn">0.0 秒</div></div><div class="opts two"><button class="btn start" id="sw_s">開始</button><button class="btn stop" id="sw_p" disabled>停止</button></div><div id="fb"><button class="btn alt" id="b_ready">我準備好了 👍</button></div>`);
  let called=false,dressed=false,tCall=0,tDone=0,t0=0,raf=0,timers=[];const num=$('#swn'),call=$('#call');
  const reset=msg=>{timers.forEach(clearTimeout);cancelAnimationFrame(raf);miss(t,msg);setTimeout(()=>{if(!t.finished)R.suit(t);},2200);};
- $('#b_ready').onclick=()=>{SFX.click();fb('');const pre=ri(1500,2800);timers.push(setTimeout(()=>{called=true;tCall=performance.now();call.textContent='開始！';call.classList.add('go');SFX.call();
+ let readied=false;$('#b_ready').onclick=()=>{if(readied)return;readied=true;SFX.click();fb('');const pre=ri(1500,2800);timers.push(setTimeout(()=>{called=true;tCall=performance.now();call.textContent='開始！';call.classList.add('go');SFX.call();
   parts.forEach((p,i)=>timers.push(setTimeout(()=>{panel.querySelectorAll('.parts span')[i]?.classList.add('on');SFX.snap();},T*1000*(i+1)/parts.length-250)));
   timers.push(setTimeout(()=>{dressed=true;tDone=performance.now();const a=$('#astro');if(a)a.textContent='👨‍🚀';call.textContent='穿好了！✅';call.classList.remove('go');call.classList.add('done');},T*1000));},pre));};
  $('#sw_s').onclick=()=>{if(!called)return reset('太早了！要<b>聽到「開始」才按開始</b>，這樣才公平。');t0=performance.now();$('#sw_s').disabled=true;$('#sw_p').disabled=false;const tk=()=>{num.textContent=((performance.now()-t0)/1000).toFixed(1)+' 秒';raf=requestAnimationFrame(tk);};tk();SFX.click();};
@@ -253,9 +255,9 @@ R.suit=t=>{const T=ri(6,9);const parts=['👕 太空衣','🧤 手套','👢 靴
 // 記錄成績 約 N 秒
 R.record=t=>{const e=G.rec.suit??7.4,n=Math.round(e);let v=ri(0,1)?n+ri(2,4):Math.max(1,n-ri(2,4));
  showPanel(`${head(t)}<p class="prompt">剛才秒錶顯示 <b>${e.toFixed(1)} 秒</b>。<br>在記錄表寫上「約＿秒」吧！</p><div class="sheet">📋 太空人穿太空衣：${picker(v)}</div><button class="btn go" id="b_ok">寫好了 ✔</button><div id="fb"></div>`);
- bindPicker(panel,()=>v,x=>v=x);$('#b_ok').onclick=()=>{if(t.finished)return;if(v===n)finish(t,`${e.toFixed(1)} 秒最接近 ${n} 秒，所以記錄「<b>約 ${n} 秒</b>」。`);else miss(t,`${e.toFixed(1)} 秒最接近哪個整數？用 ＋／－ 調整。`);};};
+ bindPicker(panel,()=>v,x=>v=x);$('#b_ok').onclick=()=>{if(t.finished)return;if(v===n||v===Math.floor(e))finish(t,`${e.toFixed(1)} 秒最接近 ${n} 秒，所以記錄「<b>約 ${n} 秒</b>」。`);else miss(t,`${e.toFixed(1)} 秒最接近哪個整數？用 ＋／－ 調整。`);};};
 // 誠實計時員: alien race + temptation
-R.race=t=>{const T=ri(7,10)+Math.random()*.5;const lanes=[['👽','小藍',1],['🐙','小八',T/(T-1.2)],['🤖','機機',T/(T+1.5)]];G.rec.race=null;
+R.race=t=>{const T=ri(7,10)+Math.random()*.5;panel.dataset.racedone='';const lanes=[['👽','小藍',1],['🐙','小八',T/(T-1.2)],['🤖','機機',T/(T+1.5)]];G.rec.race=null;
  showPanel(`${head(t)}<p class="prompt">你是 <b>👽 小藍</b> 的計時員！聽到「開始」按開始，小藍<b>衝過終點</b>才按停止。</p>
  <div class="track">${lanes.map((l,i)=>`<div class="lane"><span class="nm">${l[1]}</span><span class="runner" id="rn${i}">${l[0]}</span><span class="fin">🏁</span></div>`).join('')}<div class="call" id="call">準備…</div></div>
  <div class="sw small"><div class="swnum" id="swn">0.0 秒</div></div><div class="opts two"><button class="btn start" id="sw_s">開始</button><button class="btn stop" id="sw_p" disabled>停止</button></div><div id="fb"><button class="btn alt" id="b_ready">我準備好了 👍</button></div><div class="tempt" id="tempt"></div>`);
@@ -264,12 +266,13 @@ R.race=t=>{const T=ri(7,10)+Math.random()*.5;const lanes=[['👽','小藍',1],['
   lanes.forEach((l,i)=>{const f=Math.min(1,raceT/(T/l[2]));const el=$('#rn'+i);if(el)el.style.left=`calc(${f*100}% * .82 + 8%)`;});
   if(running)num.textContent=swT.toFixed(1)+' 秒';
   if(!tempted&&raceT>T*.55){tempted=true;paused=true;$('#tempt').innerHTML=`<div class="tbox"><div class="who">🐙 小八悄悄說：</div><p>「小藍是我的好朋友！<b>幫我提早按停啦</b>，他就可以入隊！」</p><div class="opts"><button class="btn opt" id="t_no">不可以！我要誠實計時 🙅</button><button class="btn opt" id="t_yes">好吧…</button></div></div>`;
-   $('#t_no').onclick=()=>{SFX.ok();$('#tempt').innerHTML='';paused=false;};$('#t_yes').onclick=()=>{honest=false;SFX.no();$('#tempt').innerHTML=`<div class="tbox"><p>⚠️ 提早按停，成績就<b>不可信</b>，對其他參賽者<b>不公平</b>！我們還是要誠實計時。</p><button class="btn go" id="t_ok">明白了，繼續</button></div>`;$('#t_ok').onclick=()=>{$('#tempt').innerHTML='';paused=false;};};}
-  if(raceT>=T&&!finishedRace){finishedRace=true;}
+   $('#t_no').onclick=()=>{SFX.ok();$('#tempt').innerHTML='';paused=false;};$('#t_yes').onclick=()=>{honest=false;SFX.no();$('#tempt').innerHTML=`<div class="tbox"><p>⚠️ 提早按停，成績就<b>不可信</b>，對其他參賽者<b>不公平</b>！我們還是要誠實計時。</p><button class="btn go" id="t_ok">明白了，繼續</button></div>`;const tok0=performance.now();$('#t_ok').onclick=()=>{if(performance.now()-tok0<600)return;$('#tempt').innerHTML='';paused=false;};};}
+  if(raceT>=T&&!finishedRace){finishedRace=true;panel.dataset.racedone='1';}
+  if(finishedRace&&!running&&!$('#sw_s').disabled&&raceT>T+1.2&&!t.finished){fb(`<div class="fb bad"><b>忘了按「開始」？</b><p>聽到「開始」要立即按開始，小藍衝線才按停止。</p><button class="btn go" id="b_again">再跑一次 🔁</button></div>`);$('#b_again').onclick=()=>{t.miss++;R.race(t);};return;}
   raf=requestAnimationFrame(loop);};
  $('#b_ready').onclick=()=>{SFX.click();fb('');setTimeout(()=>{called=true;const c=$('#call');if(!c)return;c.textContent='開始！';c.classList.add('go');SFX.call();last=performance.now();raf=requestAnimationFrame(loop);},ri(1200,2400));};
- $('#sw_s').onclick=()=>{if(!called){miss(t,'太早了！要<b>聽到「開始」</b>才按。');return;}running=true;swT=raceT;$('#sw_s').disabled=true;$('#sw_p').disabled=false;SFX.click();};
- $('#sw_p').onclick=()=>{if(paused)return;if(!finishedRace){miss(t,'小藍<b>還未到終點</b>！不可以提早按停，要等他衝過終點。');return;}running=false;$('#sw_p').disabled=true;cancelAnimationFrame(raf);
+ $('#sw_s').onclick=()=>{if(!called){miss(t,'太早了！要<b>聽到「開始」</b>才按。');return;}if(running||t.finished)return;running=true;swT=raceT;$('#sw_s').disabled=true;$('#sw_p').disabled=false;SFX.click();};
+ $('#sw_p').onclick=()=>{if(paused||!running||t.finished)return;if(!finishedRace){miss(t,'小藍<b>還未到終點</b>！不可以提早按停，要等他衝過終點。');return;}running=false;$('#sw_p').disabled=true;cancelAnimationFrame(raf);
   const late=raceT-T;G.rec.race=swT;if(!honest)t.miss++;if(late>1.5)t.miss++;finish(t,`秒錶顯示 <b>${swT.toFixed(1)} 秒</b>。${honest?'你拒絕了不公平的要求，是誠實的計時員！👏':'記住：要誠實，不可以幫朋友提早按停。'}`);};};
 // 記分牌: record the true time
 R.board=t=>{const e=G.rec.race??8.6,n=Math.round(e);let v=Math.max(1,n-2);const others=[['🐙 小八',n-1],['🤖 機機',n+2]];
@@ -334,7 +337,7 @@ R.rock=t=>{const list=shuffle([...shuffle(SEC_ACTS).slice(0,3).map(a=>[...a,'s']
  const loop=now=>{if(!live(ar))return;const dt=Math.min(.05,(now-last)/1000);last=now;if(cur&&!cur.drag&&!cur.sent){cur.y+=26*dt;if(cur.y>ar.clientHeight-40)cur.y=-60;cur.d.style.left=cur.x+'px';cur.d.style.top=cur.y+'px';}requestAnimationFrame(loop);};
  next();requestAnimationFrame(loop);};
 // 秒針追蹤 (tap when the seconds hand reaches the target)
-R.track=t=>{const tg=shuffle([ri(2,11)*5,ri(1,58),ri(2,11)*5]).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);while(tg.length<3)tg.push(ri(1,59));let ti=0,off=0,last=performance.now(),tick=0;const SP=4;
+R.track=t=>{const tg=[ri(2,11)*5,ri(2,11)*5,ri(1,58)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);while(tg.length<3)tg.push(ri(1,59));let ti=0,off=0,last=performance.now(),tick=0;const SP=4;
  showPanel(`${head(t)}<p class="prompt">⚡ 快速時鐘！秒針到 <b id="tgv">${tg[0]} 秒</b> 時，按「停！」</p><div class="cbox trk">${clockSVG({sec:0,showMin:false,showHr:false,cls:'big'})}<div class="tgt" id="tgl">🎯 ${tg[0]}</div></div>
  <div class="dots3">${tg.map((_,i)=>`<i id="d${i}"></i>`).join('')}</div><button class="btn go bigtap" id="tap">停！✋</button><div id="fb"></div>`);
  const svg=panel.querySelector('.clock'),sh=svg.querySelector('[data-hand=sec]');const mk=document.createElementNS('http://www.w3.org/2000/svg','circle');mk.setAttribute('r','9');mk.setAttribute('fill','#ffb020');mk.setAttribute('class','tmark');svg.appendChild(mk);
@@ -381,8 +384,8 @@ R.judge=t=>{const list=shuffle([SCENES[0],...shuffle(SCENES.slice(1)).slice(0,2)
   const loop=now=>{if(!live(rr))return;const e=(now-t0)/1000,dt=(now-last)/1000;last=now;if(e>runStart&&bub.textContent!=='開始！'){bub.textContent='開始！';bub.classList.add('go');tone(784,.12,'square',.08);swOn=true;}
    const f=Math.max(0,Math.min(1,(e-runStart)/dur));rr.style.left=`calc(${f*82}% + 2%)`;if(swOn)swV+=dt*3.8;if(swOn&&f>=stopAt){swOn=false;tone(500,.08,'square',.08);sw.classList.add('stop');}
    sw.textContent='⏱️ '+swV.toFixed(1);if(f>=1&&e>runStart+dur+.5){if(s.k==='less'){$('#nt').innerHTML='📋 記錄：<b>'+Math.max(1,Math.round(swV)-2)+' 秒</b>';}$('#sb').style.visibility='visible';return;}requestAnimationFrame(loop);};requestAnimationFrame(loop);
-  panel.querySelectorAll('.stampb').forEach(b=>b.onclick=()=>{if(t.finished)return;const fair=s.k==='ok',v=b.dataset.v==='ok';const st=$('#stp');st.textContent=v?'✅':'❌';st.className='stamp '+(v?'g':'r')+' in';tone(160,.15,'square',.12);
-   if(v===fair){SFX.ok();fb(`<div class="fb good"><b>判得好！</b><p>${s.why}</p><button class="btn go" id="nx">下一段 ▶</button></div>`);$('#nx').onclick=()=>{si++;if(si>=list.length){showPanel(`${head(t)}<div class="intro"><div class="big">⚖️</div></div><div id="fb"></div>`);t.miss=wrong?1:0;finish(t,'你是公平的裁判！計時要<b>誠實、公平</b>，成績才可信。');}else show();};}
+  let judged=false;panel.querySelectorAll('.stampb').forEach(b=>b.onclick=()=>{if(t.finished||judged)return;const fair=s.k==='ok',v=b.dataset.v==='ok';const st=$('#stp');st.textContent=v?'✅':'❌';st.className='stamp '+(v?'g':'r')+' in';tone(160,.15,'square',.12);
+   if(v===fair){judged=true;panel.querySelectorAll('.stampb').forEach(x=>x.disabled=true);SFX.ok();fb(`<div class="fb good"><b>判得好！</b><p>${s.why}</p><button class="btn go" id="nx">下一段 ▶</button></div>`);let nxd=false;$('#nx').onclick=()=>{if(nxd)return;nxd=true;si++;if(si>=list.length){showPanel(`${head(t)}<div class="intro"><div class="big">⚖️</div></div><div id="fb"></div>`);t.miss=wrong?1:0;finish(t,'你是公平的裁判！計時要<b>誠實、公平</b>，成績才可信。');}else show();};}
    else{wrong++;SFX.no();setTimeout(()=>{st.className='stamp';},700);fb(`<div class="fb bad"><b>再看看 🤔</b><p>${fair?'這次計時員有等「開始」和衝線，是公平的。':'留意：計時員是不是太早按、或者寫錯時間？'}</p></div>`);}});};show();};
 // 北斗授時 timing game: tap 同步 when the ship hand overlaps the Beidou hand
 R.sync=t=>{let n=0,off=0,last=performance.now(),ga=0,ra=ri(120,240);const VG=150,VR=70;
@@ -440,27 +443,32 @@ function ropeTo(p){const o=rsObjs;o.rope.geometry.dispose();const mid=RV.c.copy(
  o.rope.geometry=new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(RV.hand.clone(),mid.clone(),p.clone()),20,.14,5,false);o.hook.position.copy(p);}
 function startRescue(){if(RS.on)return;RS.on=true;G.rescued=true;mode.m='rescue';api.setFree(false);ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';
  if(!rsObjs)rsObjs=buildRescue();rsObjs.g.visible=true;rsObjs.hull.visible=rsObjs.me.visible=false;rsObjs.rope.visible=rsObjs.hook.visible=false;
- RS.lp=new THREE.Vector3(14,3,-55);rsObjs.lost.position.copy(RS.lp);RS.phase='alert';RS.t=0;RS.ox=30;RS.ox0=30;RS.pull=0;
+ RS.lp=new THREE.Vector3(14,3,-55);rsObjs.lost.position.copy(RS.lp);RS.phase='alert';RS.t=0;RS.ox=30;RS.ox0=30;RS.pull=0;RS.miss=0;RS.hold=false;RS.aiming=false;
  [0,.5,1,1.5].forEach(d=>tone(880,.25,'square',.08,d));tone(660,.25,'square',.08,.25);tone(660,.25,'square',.08,.75);
  showPanel(`<div class="intro sos"><div class="big">🆘</div><h2>有太空人飄走了！</h2><p>📻「救命呀！我的安全繩斷了！」</p><p class="sub">快出去，用繩把他拉回來！</p><button class="btn go" id="b_eva">出去救他！🧑‍🚀</button></div>`,'small');
  $('#b_eva').onclick=()=>{SFX.click();goEva();};}
 function goEva(){hidePanel();fade.textContent='🚪 氣閘門打開…';fade.classList.add('on');tone(200,.8,'sawtooth',.05,0,.4);
  setTimeout(()=>{api.cockpit.group.visible=false;rsObjs.hull.visible=rsObjs.me.visible=true;RS.cam0=new THREE.Vector3(0,1,-3);RS.cam1=new THREE.Vector3(10,7,20);RS.ct=0;RS.phase='enter';api.eva=true;cam.position.copy(RS.cam0);fade.classList.remove('on');},700);}
 function evaHud(){const s=Math.max(0,Math.ceil(RS.ox));evaUI.innerHTML=`<div class="oxy ${s<=8?'low':''}">${clockSVG({sec:60-s,showMin:false,showHr:false,cls:'oxc'})}<div><small>氧氣還有</small><b>${s} 秒</b></div></div>
- <div class="evatip">${RS.phase==='aim'?'👆 按住拖動瞄準，放手就拋繩！':RS.phase==='throw'?'🪢 拋繩中…':RS.phase==='pull'?'💪 勾住了！快按「拉！」':''}</div>${RS.phase==='pull'?`<div class="pullbar"><i style="width:${RS.pull*100}%"></i></div><button class="btn go bigtap" id="b_pull">拉！💪</button>`:''}`;
- const b=$('#b_pull');if(b)b.onpointerdown=e=>{e.preventDefault();pullOnce();};}
-function pullOnce(){if(RS.phase!=='pull')return;RS.pull=Math.min(1,RS.pull+.09);tone(300+RS.pull*500,.06,'triangle',.1);const bar=evaUI.querySelector('.pullbar i');if(bar)bar.style.width=RS.pull*100+'%';if(RS.pull>=1)saved();}
-addEventListener('keydown',e=>{if(RS.on&&e.code==='Space'){pullOnce();}});
+ <div class="evatip">${RS.phase==='aim'?'👆 按住拖動瞄準，放手就拋繩！':RS.phase==='throw'?'🪢 拋繩中…':RS.phase==='pull'?'💪 勾住了！快按「拉！」':''}</div>${RS.phase==='pull'?`<div class="pullbar"><i style="width:${RS.pull*100}%"></i></div>`:''}`;
+ pullBtn.style.display=RS.phase==='pull'?'block':'none';}
+const pullBtn=document.createElement('button');pullBtn.className='btn go bigtap';pullBtn.id='b_pull';pullBtn.innerHTML='拉！💪';pullBtn.style.cssText='display:none;position:fixed;left:50%;bottom:calc(14vh + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;min-width:200px;min-height:84px;font-size:30px;touch-action:none';document.body.appendChild(pullBtn);
+RS.hold=false;pullBtn.addEventListener('pointerdown',e=>{e.preventDefault();try{pullBtn.setPointerCapture(e.pointerId);}catch(_){}RS.hold=true;RS.holdT=0;pullOnce();});
+['pointerup','pointercancel','lostpointercapture','pointerleave'].forEach(n=>pullBtn.addEventListener(n,()=>{RS.hold=false;}));
+pullBtn.addEventListener('click',e=>e.preventDefault());
+function pullOnce(){if(RS.phase!=='pull')return;RS.pull=Math.min(1,RS.pull+.12);tone(300+RS.pull*500,.06,'triangle',.1);const bar=evaUI.querySelector('.pullbar i');if(bar)bar.style.width=RS.pull*100+'%';if(RS.pull>=1)saved();}
+addEventListener('keydown',e=>{if(RS.on&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();if(RS.phase==='pull')pullOnce();else if(RS.phase==='aim')autoThrow();}});
 let lastSec=-1;
-function rescueUpdate(dt){const o=rsObjs;RS.t+=dt;o.lost.rotation.x+=dt*.4;o.lost.rotation.z+=dt*.25;
- if(RS.phase==='alert'||RS.phase==='enter'||RS.phase==='aim'||RS.phase==='throw'){RS.lp.x+=dt*.6;RS.lp.z-=dt*.4;}
+function rescueUpdate(dt){const o=rsObjs;if(fireBtn.style.display!=='none'){fireBtn.style.display='none';firing=false;}RS.t+=dt;o.lost.rotation.x+=dt*.4;o.lost.rotation.z+=dt*.25;
+ if(RS.phase==='alert'||RS.phase==='enter'||RS.phase==='aim'||RS.phase==='throw'){if((RS.miss||0)>=1){RV.c.set(6,2,-26);RS.lp.lerp(RV.c,Math.min(1,dt*.5*(RS.miss||0)));}else{RS.lp.x+=dt*.6;RS.lp.z-=dt*.4;if(RS.lp.z<-60){RS.lp.z=-60;}if(RS.lp.x>20)RS.lp.x=20;}}
  if(RS.phase==='enter'){RS.ct+=dt/1.4;const u=Math.min(1,RS.ct),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;cam.position.lerpVectors(RS.cam0,RS.cam1,e);if(u>=1){RS.phase='aim';evaPad.style.display=evaUI.style.display='block';evaHud();}}
  if(api.eva){ship.localToWorld(RV.a.set(2,0,-28));cam.lookAt(RV.a);}
- if(['aim','throw','pull'].includes(RS.phase)){RS.ox-=dt;const s=Math.ceil(RS.ox);if(s!==lastSec){lastSec=s;evaHud();if(s<=5&&s>0)tone(1000,.05,'square',.05);}
+ if(RS.phase==='pull'&&RS.hold){RS.holdT+=dt;if(RS.holdT>.22){RS.holdT=0;pullOnce();}}
+ if(['aim','throw'].includes(RS.phase)){RS.ox-=dt;const s=Math.ceil(RS.ox);if(s!==lastSec){lastSec=s;evaHud();if(s<=5&&s>0)tone(1000,.05,'square',.05);}
   if(RS.ox<=0){RS.phase='retry';o.rope.visible=o.hook.visible=false;tone(330,.3,'sine',.1);
-   evaUI.innerHTML=`<div class="evacard"><h3>差一點點！😅</h3><p>不要緊，氧氣補充了！給你 <b>40 秒</b>再試一次。</p><button class="btn go" id="b_rt">再試一次 💪</button></div>`;$('#b_rt').onclick=()=>{RS.lp.set(14,3,-55);RS.ox=40;RS.ox0=70;RS.pull=0;RS.phase='aim';evaHud();};}}
+   evaUI.innerHTML=`<div class="evacard"><h3>差一點點！😅</h3><p>不要緊，氧氣補充了！給你 <b>40 秒</b>再試一次。</p><button class="btn go" id="b_rt">再試一次 💪</button></div>`;pullBtn.style.display='none';RS.aiming=false;aim.style.display='none';RS.miss=Math.max(RS.miss||0,2);$('#b_rt').onclick=()=>{RS.lp.set(8,2,-32);RS.ox=40;RS.ox0=70;RS.pull=0;RS.phase='aim';evaHud();};}}
  if(RS.phase==='throw'){RS.th+=dt/0.6;const u=Math.min(1,RS.th);RV.b.copy(RV.hand).lerp(RS.tgt,u);ropeTo(RV.b);
-  if(u>=1){if(RS.tgt.distanceTo(RS.lp)<11){RS.phase='pull';RS.grab=RS.lp.clone();SFX.snap();evaHud();}else{RS.phase='back';RS.th=1;SFX.no();evaUI.querySelector('.evatip').textContent='沒有勾中！再瞄準一次 🎯';}}}
+  if(u>=1){if(RS.near||RS.tgt.distanceTo(RS.lp)<20||(RS.miss||0)>=2){RS.phase='pull';RS.grab=RS.lp.clone();SFX.snap();evaHud();}else{RS.phase='back';RS.th=1;SFX.no();RS.miss=(RS.miss||0)+1;const tp=evaUI.querySelector('.evatip');if(tp)tp.textContent=RS.miss>=2?'他飄近了！下一次一定勾到 🎯':'差少少！瞄準 🆘 再拋一次 🎯';}}}
  if(RS.phase==='back'){RS.th-=dt/0.4;RV.b.copy(RV.hand).lerp(RS.tgt,Math.max(0,RS.th));ropeTo(RV.b);if(RS.th<=0){o.rope.visible=o.hook.visible=false;RS.phase='aim';}}
  if(RS.phase==='pull'){RS.lp.lerpVectors(RS.grab,RV.c.set(2.5,1.4,-6.5),RS.pull);ropeTo(RS.lp);}
  o.lost.position.copy(RS.lp);
@@ -468,11 +476,17 @@ function rescueUpdate(dt){const o=rsObjs;RS.t+=dt;o.lost.rotation.x+=dt*.4;o.los
  if(RS.phase!=='done'){o.lost.getWorldPosition(RV.a);RV.a.project(cam);const W=innerWidth,H=innerHeight;sosMark.style.display=RV.a.z<1&&RS.phase!=='pull'?'block':'none';sosMark.style.left=(RV.a.x*.5+.5)*W+'px';sosMark.style.top=(-RV.a.y*.5+.5)*H+'px';}}
 evaPad.addEventListener('pointerdown',e=>{if(RS.phase!=='aim')return;evaPad.setPointerCapture(e.pointerId);RS.aiming=true;aim.style.display='block';aim.style.left=e.clientX+'px';aim.style.top=e.clientY+'px';});
 evaPad.addEventListener('pointermove',e=>{if(!RS.aiming)return;aim.style.left=e.clientX+'px';aim.style.top=e.clientY+'px';});
+evaPad.addEventListener('pointercancel',e=>{if(!RS.aiming)return;RS.aiming=false;aim.style.display='none';throwAt(RS.ax??e.clientX,RS.ay??e.clientY);});
+evaPad.addEventListener('pointerdown',e=>{if(RS.phase==='pull'){RS.dy=e.clientY;RS.dragging=true;pullOnce();}});
+evaPad.addEventListener('pointermove',e=>{if(RS.aiming){RS.ax=e.clientX;RS.ay=e.clientY;}if(RS.phase==='pull'&&RS.dragging&&Math.abs(e.clientY-RS.dy)>40){RS.dy=e.clientY;pullOnce();}});
+addEventListener('pointerup',()=>{RS.dragging=false;});
 evaPad.addEventListener('pointerup',e=>{if(!RS.aiming)return;RS.aiming=false;aim.style.display='none';throwAt(e.clientX,e.clientY);});
+function autoThrow(){rsObjs.lost.getWorldPosition(RV.a);RV.a.project(cam);throwAt((RV.a.x*.5+.5)*innerWidth,(-RV.a.y*.5+.5)*innerHeight);}
 function throwAt(x,y){if(RS.phase!=='aim')return;const rc=new THREE.Raycaster();rc.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),cam);
  rsObjs.lost.getWorldPosition(RV.a);const n=cam.getWorldDirection(new THREE.Vector3());const pl=new THREE.Plane().setFromNormalAndCoplanarPoint(n,RV.a);const hit=new THREE.Vector3();if(!rc.ray.intersectPlane(pl,hit))return;
- RS.tgt=ship.worldToLocal(hit);RS.th=0;RS.phase='throw';rsObjs.rope.visible=rsObjs.hook.visible=true;tone(500,.3,'sawtooth',.05,0,2.5);evaHud();}
-function saved(){RS.phase='done';evaPad.style.display=evaUI.style.display='none';sosMark.style.display='none';SFX.win();burst(evaUI,['⭐','🎉','✨']);
+ RV.b.copy(RV.a).project(cam);const sx=(RV.b.x*.5+.5)*innerWidth,sy=(-RV.b.y*.5+.5)*innerHeight;RS.near=Math.hypot(sx-x,sy-y)<Math.max(130,Math.min(innerWidth,innerHeight)*.22)*(1+(RS.miss||0)*.8);
+ RS.tgt=RS.near?RS.lp.clone():ship.worldToLocal(hit);RS.th=0;RS.phase='throw';rsObjs.rope.visible=rsObjs.hook.visible=true;tone(500,.3,'sawtooth',.05,0,2.5);evaHud();}
+function saved(){RS.phase='done';RS.hold=false;pullBtn.style.display='none';evaPad.style.display=evaUI.style.display='none';sosMark.style.display='none';SFX.win();burst(evaUI,['⭐','🎉','✨']);
  setTimeout(()=>{fade.textContent='🚪 返回飛船…';fade.classList.add('on');setTimeout(()=>{rsObjs.g.visible=false;api.cockpit.group.visible=true;api.eva=false;cam.position.set(0,0,0);cam.rotation.set(0,0,0);fade.classList.remove('on');
   G.stars++;G.max++;G.fuel=Math.min(100,G.fuel+20);renderHud();
   showPanel(`<div class="intro thanks"><div class="big">🧑‍🚀💖</div><h2>謝謝你救了我！</h2><p>你在 <b>${Math.max(1,Math.round((RS.ox0||30)-RS.ox))} 秒</b>內完成救援！</p><p class="bonus">⭐ +1　⛽ +20</p><button class="btn go" id="b_cont">繼續飛行 🚀</button></div>`,'small');
@@ -552,7 +566,7 @@ const WV={on:false,t:0};const walert=document.createElement('div');walert.id='wa
 function startWave(){if(!G)return;G['wave'+G.si]=true;const n=3+Math.min(2,Math.floor(G.si/2));WV.on=true;WV.t=0;WV.left=n;
  walert.innerHTML='👾 怪獸來了！<b>射擊佢們！</b><small>'+(api.touch?'按右邊「🔫 發射」':'按 空白鍵／J／滑鼠左鍵 發射')+'</small>';walert.classList.remove('on');void walert.offsetWidth;walert.classList.add('on');
  [0,.2,.4].forEach((d,i)=>tone(400-i*60,.18,'square',.08,d));
- monsters.forEach((m,i)=>{m.alive=i<n;m.g.visible=i<n;m.hp=i===0?2:3;m.ph=Math.random()*6;m.base=new THREE.Vector3((i-(n-1)/2)*16,(i%2?6:-3),-55-i*6);m.off.copy(m.base).add(new THREE.Vector3(0,20,-120));m.shootT=2+Math.random()*3;m.g.scale.setScalar(1);m.body.emissiveIntensity=.35;});}
+ monsters.forEach((m,i)=>{m.alive=i<n;m.g.visible=i<n;m.hp=G.si<3?2:(i===0?2:3);m.ph=Math.random()*6;m.base=new THREE.Vector3((i-(n-1)/2)*16,(i%2?6:-3),-55-i*6);m.off.copy(m.base).add(new THREE.Vector3(0,20,-120));m.shootT=(G.si<3?4:2)+Math.random()*3;m.g.scale.setScalar(1);m.body.emissiveIntensity=.35;});}
 function endWave(cleared){WV.on=false;if(cleared){SFX.win();G.stars++;G.max++;G.fuel=Math.min(100,G.fuel+15);renderHud();toast('🎉 全部怪獸打敗了！⭐ +1　⛽ +15');}else{toast('👾 怪獸飛走了… 下次再挑戰！');monsters.forEach(m=>{if(m.alive){m.leaving=true;}});setTimeout(()=>monsters.forEach(m=>{m.alive=false;m.leaving=false;m.g.visible=false;}),2500);}}
 function popMonster(m){m.alive=false;G.monsters=(G.monsters||0)+1;SFX.star();tone(700,.15,'triangle',.12);tone(1100,.2,'triangle',.1,.08);
  for(let j=0;j<8;j++){const s=new THREE.Mesh(gemGeo,new THREE.MeshBasicMaterial({color:new THREE.Color(MCOL[j%5]).multiplyScalar(1.6)}));s.position.copy(m.g.position);s.scale.setScalar(.6);S.add(s);frags.push({m:s,t:0,v:new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).multiplyScalar(70)});}
@@ -571,7 +585,7 @@ function combatUpdate(dt){fireCd-=dt;if(firing&&fireCd<=0)fire();fireBtn.style.d
  if(WV.on){WV.t+=dt;if(WV.t>25)endWave(false);}
  for(const m of monsters){if(!m.g.visible)continue;m.ph+=dt;if(m.leaving){m.off.y+=dt*80;}else{RV.b.copy(m.base).add(RV.c.set(Math.sin(m.ph*1.3)*12,Math.sin(m.ph*1.9)*5,Math.sin(m.ph*.7)*8));m.off.lerp(RV.b,1-Math.exp(-dt*2.5));}
   m.g.position.copy(m.off).applyQuaternion(ship.quaternion).add(ship.position);m.g.quaternion.copy(ship.quaternion);m.g.rotateY(Math.PI);m.g.rotation.z+=Math.sin(m.ph*3)*.1;m.tents.forEach((t,i)=>t.rotation.x=Math.sin(m.ph*5+i)*.5);
-  if(m.alive&&!m.leaving){m.shootT-=dt;if(m.shootT<=0){m.shootT=3+Math.random()*3;const gb=goos.find(x=>x.life<=0);if(gb){gb.m.position.copy(m.g.position);gb.v.subVectors(ship.position,m.g.position).normalize().multiplyScalar(45).addScaledVector(api.vel,.9);gb.m.visible=true;gb.life=5;tone(250,.2,'sine',.08,0,.6);}}}}
+  if(m.alive&&!m.leaving){m.shootT-=dt;if(m.shootT<=0){m.shootT=(G.si<3?4.5:2.6)+Math.random()*3;const gb=goos.find(x=>x.life<=0);if(gb){gb.m.position.copy(m.g.position);gb.v.subVectors(ship.position,m.g.position).normalize().multiplyScalar(45).addScaledVector(api.vel,.9);gb.m.visible=true;gb.life=5;tone(250,.2,'sine',.08,0,.6);}}}}
  for(const gb of goos){if(gb.life<=0)continue;gb.life-=dt;gb.m.position.addScaledVector(gb.v,dt);gb.m.scale.setScalar(1+Math.sin(gb.life*10)*.15);if(gb.m.position.distanceTo(ship.position)<6){gb.life=0;hurtFuel(5,'💚 黏黏 ⛽ -5');tone(150,.3,'sine',.12,0,.5);}if(gb.life<=0)gb.m.visible=false;}
  // big rock hint
  if(G&&!G.bigHint){for(const k of rocks){if(k.big&&k.m.position.distanceTo(ship.position)<500){G.bigHint=true;toast('🪨🔴 閃不開！要射爆！'+(api.touch?'按「🔫 發射」':'按空白鍵發射'));break;}}}}
@@ -672,7 +686,7 @@ function friendDone(){lightAll(true);SFX.win();G.alienFriend=true;G.stars++;G.ma
 function result(){G.done=true;mode.m='result';api.setMission('任務完成！');renderHud();const pct=G.max?G.stars/G.max:0,medal=pct>=.9?'🏆':pct>=.7?'🥇':pct>=.5?'🥈':'🥉';
  const rows=Object.keys(SKILL).filter(k=>G.stat[k]).map(k=>{const [a,b]=G.stat[k];return {k,a,b,good:a/b>=.75};});const weak=rows.filter(r=>!r.good),nm=G.name||'小太空人';
  const ai=weak.length?`<p>${nm}，你在 <b>${rows.filter(r=>r.good).map(r=>SKILL[r.k]).join('、')||'努力嘗試'}</b> 表現很好！</p><p>可以再多練習：</p><ul>${weak.map(r=>`<li><b>${SKILL[r.k]}</b>：${TIP[r.k]}</li>`).join('')}</ul>`:`<p>${nm}，太厲害了！每一項都掌握得很好！記得計時要<b>誠實、公平</b>啊！</p>`;
- const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我會計算用了多少秒','我知道估計和實測可能不同','我會誠實記錄結果'];
+ const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我知道估計和實測可能不同','我會誠實記錄結果','我會計算用了多少秒'];
  showPanel(`<div class="result"><div class="big">${medal}</div><h2>${G.name?G.name+'的':''}成績表</h2><p class="score">⭐ ${G.stars} / ${G.max}　💎 ${G.gems}</p><p class="sub">🪨 閃避石頭 ${G.dodge||0} 次　💥 撞到 ${G.hits||0} 次<br>👾 打敗怪獸 ${G.monsters||0}　🪨 射爆石頭 ${G.rocksShot||0}</p>
  <div class="skills">${rows.map(r=>`<div class="sk ${r.good?'g':'w'}"><span>${r.good?'✅':'💪'} ${SKILL[r.k]}</span><span>${r.a}/${r.b}</span></div>`).join('')}</div>
  ${G.alienFriend||G.rescued?`<p class="stick">${G.rescued?'<span>🧑‍🚀 救援英雄</span>':''}${G.alienFriend?'<span>👽 外星朋友</span>':''}</p>`:''}<div class="ai"><h3>🤖 AI 小助手的建議</h3>${ai}</div>
@@ -714,7 +728,7 @@ function exploreUpdate(dt){exT+=dt;if(exT<.25)return;exT=0;let best=null,bd=1e9;
  api.setMission(near?`附近：${near.n}`:'自由太空探索');}
 
 $('#gmute').onclick=e=>{muted=!muted;e.currentTarget.textContent=muted?'🔇':'🔊';};
-let dbgNoRescue=false;const dbg={startWave,fire,monsters,WV,set firing(v){firing=v;},rocks,spawnRocks,rockHit,undock(){fly.docked=null;fly.on=false;mode.m='idle';},startAlien,AL,startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
+let dbgNoRescue=false;const dbg={stationTasks,autoThrow,pullBtn,startWave,fire,monsters,WV,set firing(v){firing=v;},rocks,spawnRocks,rockHit,undock(){fly.docked=null;fly.on=false;mode.m='idle';},startAlien,AL,startRescue,RS,throwAt,pullOnce,set noRescue(v){dbgNoRescue=v;},startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
  setSi(i){G.si=i;renderHud();},dock(i){G.si=i;renderHud();mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);glideTo(STATIONS[i].key,.05);},
  task(kind,extra={}){const t={kind,title:'',skill:'hand',...extra};G.tasks=[t];G.ti=0;t.miss=0;t.finished=false;R[kind](t);}};
 return {update,shake:()=>{if(shakeT>0){shakeT-=1/60;return shakeT*.28;}return 0;},api_eva:()=>api.eva,get speed(){return speed;},dbg};
