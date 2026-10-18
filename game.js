@@ -71,8 +71,8 @@ const bdPiv=new THREE.Object3D();targets.earthPiv.add(bdPiv);bdPiv.position.copy
 const gold=new THREE.MeshStandardMaterial({color:0xd8a640,metalness:1,roughness:.3}),pan=new THREE.MeshStandardMaterial({color:0x1a3a8a,metalness:.5,roughness:.3,emissive:0x0a1a40});
 const sats=[];for(let i=0;i<3;i++){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.BoxGeometry(3,3,4),gold));for(const sx of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(8,.2,3),pan);p.position.x=sx*6;g.add(p);}
  const a=i/3*Math.PI*2;g.position.set(Math.cos(a)*105,(i-1)*18,Math.sin(a)*105);g.lookAt(0,0,0);g.scale.setScalar(1.4);bdPiv.add(g);sats.push(g);}
-const tgtObj={venus:targets.venus,mars:targets.mars,jupiter:targets.jupiter,saturn:targets.saturn,beidou:sats[0]};
-const tgtR={venus:55,mars:40,jupiter:190,saturn:150,beidou:7};
+const tgtObj={earth:targets.earth,venus:targets.venus,mars:targets.mars,jupiter:targets.jupiter,saturn:targets.saturn,beidou:sats[0]};
+const tgtR={earth:60,venus:55,mars:40,jupiter:190,saturn:150,beidou:7};
 const up=new THREE.Vector3(0,1,0),m4=new THREE.Matrix4(),qT=new THREE.Quaternion(),BP=new THREE.Vector3(),tP=new THREE.Vector3(),tL=new THREE.Vector3(),v1=new THREE.Vector3();
 function standoff(key,outP,outL){const o=tgtObj[key],r=tgtR[key];o.getWorldPosition(BP);const toSun=v1.copy(BP).multiplyScalar(-1).normalize().applyAxisAngle(up,.7);
  const portrait=innerWidth<innerHeight*.9,pf=portrait?1.7:1;outP.copy(BP).addScaledVector(toSun,(key==='beidou'?30:r*3.4)*pf).addScaledVector(up,key==='beidou'?6:r*.5);
@@ -104,12 +104,12 @@ function update(dt){
   const p=fly.p0.clone().multiplyScalar((1-e)*(1-e)).addScaledVector(mid,2*(1-e)*e).addScaledVector(tP,e*e);
   fly.last.copy(ship.position);ship.position.copy(p);speed=fly.last.distanceTo(p)/Math.max(dt,1e-3);
   lookQ(ship.position,u<.8?tP.clone().lerp(tL,u/.8):tL,qT);ship.quaternion.copy(fly.q0).slerp(qT,Math.min(1,u*1.5));
-  if(u>=1){fly.on=false;fly.docked=fly.key;speed=0;arrive();}return true;}
+  if(u>=1){fly.on=false;fly.docked=fly.key;speed=0;fly.key==='earth'?homeArrive():arrive();}return true;}
  if(fly.docked){standoff(fly.docked,tP,tL);ship.position.copy(tP);lookQ(tP,tL,qT);ship.quaternion.slerp(qT,Math.min(1,dt*4));speed=0;return true;}
- if(mode.m==='fly')navUpdate(dt);
+ if(mode.m==='fly')navUpdate(dt);else if(mode.m==='explore')exploreUpdate(dt);
  return false;}
 // manual flight: ring at next station, arrow, distance, assist
-function startFlight(){const s=STATIONS[G.si];mode.m='fly';nav.key=s.key;nav.t=0;nav.start.copy(ship.position);standoff(s.key,tP,tL);nav.dist0=ship.position.distanceTo(tP);
+function startFlight(){const s=STATIONS[G.si];mode.m='fly';nav.key=s.key;nav.name=s.name;nav.t=0;nav.start.copy(ship.position);standoff(s.key,tP,tL);nav.dist0=ship.position.distanceTo(tP);
  api.setSpeedMul(Math.max(1,Math.min(3.5,nav.dist0/3000)));ring.visible=guide.visible=true;
  gems.forEach(g=>S.remove(g));gems.length=0;for(let i=1;i<=5;i++){const g=new THREE.Mesh(gemGeo,gemMat);g.position.copy(nav.start).lerp(tP,i/6.5).add(new THREE.Vector3((Math.random()-.5)*40,(Math.random()-.5)*30,(Math.random()-.5)*40));S.add(g);gems.push(g);}
  hidePanel();flyhint.style.display='block';api.setFree(true,true);SFX.go();autoBtn.style.display='none';
@@ -126,11 +126,11 @@ function navUpdate(dt){nav.t+=dt;standoff(nav.key,tP,tL);ring.position.copy(tP);
  // screen marker / edge arrow
  proj.copy(tP).project(api.cam);const behind=v1.copy(tP).applyMatrix4(api.cam.matrixWorldInverse).z>0;const W=innerWidth,H=innerHeight;
  let x=(proj.x*.5+.5)*W,y=(-proj.y*.5+.5)*H;const on=!behind&&x>40&&x<W-40&&y>70&&y<H-40;
- if(on){mark.style.display='block';arrow.style.display='none';mark.style.left=x+'px';mark.style.top=y+'px';mark.querySelector('span').textContent=`${STATIONS[G.si].name} ${Math.round(d)}`;}
+ if(on){mark.style.display='block';arrow.style.display='none';mark.style.left=x+'px';mark.style.top=y+'px';mark.querySelector('span').textContent=`${nav.name} ${Math.round(d)}`;}
  else{mark.style.display='none';arrow.style.display='block';let dx=x-W/2,dy=y-H/2;if(behind){dx=-dx;dy=-dy;if(Math.abs(dx)<1&&Math.abs(dy)<1)dy=1;}
   const ang=Math.atan2(dy,dx),k=Math.min((W/2-60)/Math.abs(Math.cos(ang)||1e-3),(H/2-80)/Math.abs(Math.sin(ang)||1e-3));
   arrow.style.left=(W/2+Math.cos(ang)*k)+'px';arrow.style.top=(H/2+Math.sin(ang)*k)+'px';arrow.querySelector('i').style.transform=`rotate(${ang}rad)`;arrow.querySelector('span').textContent=Math.round(d);}
- if(nav.t-nav.lastUi>.4){nav.lastUi=nav.t;api.setMission(`往 ${STATIONS[G.si].name} 還有 ${Math.round(d)}`);}}
+ if(nav.t-nav.lastUi>.4){nav.lastUi=nav.t;api.setMission(`往 ${nav.name} 還有 ${Math.round(d)}`);}}
 autoBtn.onclick=()=>{SFX.click();if(mode.m!=='fly')return;mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;
  glideTo(nav.key,Math.min(7,Math.max(3,ship.position.distanceTo(tP)/900)));};
 
@@ -157,7 +157,7 @@ function finish(t,msg,ok=true){if(t.finished)return;t.finished=true;const st=G.s
  SFX[star?'ok':'click']();renderHud();fb(`<div class="fb good"><b>${star?'完成！⭐ +1':'完成了！👍'}</b><p>${msg}</p><button class="btn go" id="b_n">下一個任務 ▶</button></div>`);
  $('#b_n').onclick=()=>{SFX.click();G.ti++;runTask();};$('#fb').scrollIntoView({block:'nearest'});}
 function stationDone(){G.si++;renderHud();SFX.win();const last=G.si>=STATIONS.length;
- showPanel(`<div class="intro"><div class="big">🎉</div><h2>本站任務完成！</h2><p>⭐ <b>${G.stars}</b>　💎 <b>${G.gems}</b></p>${last?'<button class="btn go" id="b_go">看看我的成績 🏆</button>':`<p>下一站：${STATIONS[G.si].emoji} <b>${STATIONS[G.si].name}</b><br><span class="sub">這次由你親自駕駛！</span></p><button class="btn go" id="b_go">駕駛飛船出發 🚀</button>`}</div>`,'small');
+ showPanel(`<div class="intro"><div class="big">🎉</div><h2>本站任務完成！</h2><p>⭐ <b>${G.stars}</b>　💎 <b>${G.gems}</b></p>${last?'<button class="btn go" id="b_go">看看我的成績 🏆</button>':`<p>下一站：${STATIONS[G.si].emoji} <b>${nav.name}</b><br><span class="sub">這次由你親自駕駛！</span></p><button class="btn go" id="b_go">駕駛飛船出發 🚀</button>`}</div>`,'small');
  $('#b_go').onclick=()=>{SFX.click();if(last)return result();fly.docked=null;startFlight();};}
 
 // ---------------- task renderers ----------------
@@ -281,7 +281,7 @@ R.sync=t=>{let off=pick([-1,1])*ri(4,17);const base=Date.now();const fmt=ms=>{co
  panel.querySelectorAll('.pm').forEach(b=>b.onclick=()=>{if(t.finished)return;SFX.click();off+= +b.dataset.d;if(Math.abs(off)>40)t.miss++;draw();if(off===0)finish(t,'校準成功！⏰ 北斗衛星提供「<b>授時</b>」服務，即是<b>提供準確的時間</b>。');});};
 
 // ---------------- result ----------------
-function result(){api.setMission('任務完成！');renderHud();const pct=G.max?G.stars/G.max:0,medal=pct>=.9?'🏆':pct>=.7?'🥇':pct>=.5?'🥈':'🥉';
+function result(){G.done=true;mode.m='result';api.setMission('任務完成！');renderHud();const pct=G.max?G.stars/G.max:0,medal=pct>=.9?'🏆':pct>=.7?'🥇':pct>=.5?'🥈':'🥉';
  const rows=Object.keys(SKILL).filter(k=>G.stat[k]).map(k=>{const [a,b]=G.stat[k];return {k,a,b,good:a/b>=.75};});const weak=rows.filter(r=>!r.good),nm=G.name||'小太空人';
  const ai=weak.length?`<p>${nm}，你在 <b>${rows.filter(r=>r.good).map(r=>SKILL[r.k]).join('、')||'努力嘗試'}</b> 表現很好！</p><p>可以再多練習：</p><ul>${weak.map(r=>`<li><b>${SKILL[r.k]}</b>：${TIP[r.k]}</li>`).join('')}</ul>`:`<p>${nm}，太厲害了！每一項都掌握得很好！記得計時要<b>誠實、公平</b>啊！</p>`;
  const SELF=['我會認出秒針','我會看鐘讀秒','我知道 60 秒 = 1 分鐘','我會用秒錶計時','我會誠實記錄結果'];
@@ -289,13 +289,42 @@ function result(){api.setMission('任務完成！');renderHud();const pct=G.max?
  <div class="skills">${rows.map(r=>`<div class="sk ${r.good?'g':'w'}"><span>${r.good?'✅':'💪'} ${SKILL[r.k]}</span><span>${r.a}/${r.b}</span></div>`).join('')}</div>
  <div class="ai"><h3>🤖 AI 小助手的建議</h3>${ai}</div>
  <div class="selfev"><h3>📝 自我評估：我學會了…</h3>${SELF.map((s,i)=>`<div class="se"><span>${s}</span><span class="faces" data-i="${i}"><button>😀</button><button>😐</button><button>🙁</button></span></div>`).join('')}</div>
- <div class="opts two"><button class="btn go" id="b_again">🔄 再玩一次</button><button class="btn alt" id="b_free">🚀 自由飛行</button></div></div>`,'wide');
+ <div class="opts two"><button class="btn go" id="b_again">🔄 再玩一次</button></div><div class="opts two endch"><button class="btn go home" id="b_home">🌍 飛返地球</button><button class="btn alt" id="b_free">🚀 自由太空探索</button></div></div>`,'wide');
  panel.querySelectorAll('.faces').forEach(f=>f.querySelectorAll('button').forEach(b=>b.onclick=()=>{SFX.click();f.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');G.self[f.dataset.i]=b.textContent;}));
  $('#b_again').onclick=()=>{SFX.click();newGame(G.name);fly.docked=null;renderHud();briefing();};
- $('#b_free').onclick=()=>{SFX.click();hidePanel();fly.docked=null;G=null;mode.m='idle';renderHud();api.setMission('');api.setFree(true);};}
-$('#gbtn').onclick=start;$('#gfree').onclick=()=>{ac();$('#start').style.display='none';api.setFree(true);};
+ $('#b_free').onclick=()=>{SFX.click();explore();};$('#b_home').onclick=()=>{SFX.click();startHome();};}
+$('#gbtn').onclick=start;$('#gfree').onclick=()=>{ac();$('#start').style.display='none';explore();};
+// ---- after the result: fly home to Earth, or free exploration
+function startHome(){hidePanel();fly.docked=null;mode.m='fly';nav.key='earth';nav.name='地球';nav.t=0;nav.start.copy(ship.position);standoff('earth',tP,tL);nav.dist0=ship.position.distanceTo(tP);
+ api.setSpeedMul(Math.max(1,Math.min(3.5,nav.dist0/3000)));ring.visible=guide.visible=true;
+ gems.forEach(g=>S.remove(g));gems.length=0;for(let i=1;i<=5;i++){const g=new THREE.Mesh(gemGeo,gemMat);g.position.copy(nav.start).lerp(tP,i/6.5).add(new THREE.Vector3((Math.random()-.5)*40,(Math.random()-.5)*30,(Math.random()-.5)*40));S.add(g);gems.push(g);}
+ flyhint.style.display='block';api.setFree(true,true);SFX.go();autoBtn.style.display='none';pcard.style.display=backBtn.style.display='none';
+ flyhint.innerHTML=`🌍 <b>飛返地球</b>！跟着<span class="y">黃色箭咀</span>，飛進<span class="c">光圈</span>就到家了！<span class="ctl">${api.touch?'左邊搖桿：前進／轉彎・右下「加速」':'W／↑ 前進・A D／← → 轉彎・Shift 加速'}</span>`;}
+function homeArrive(){mode.m='home';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';api.setFree(false);api.setSpeedMul(1);gems.forEach(g=>S.remove(g));gems.length=0;api.setMission('歡迎回家！');SFX.win&&SFX.win();SFX.star();
+ const conf=Array.from({length:18},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s">${['🎉','⭐','✨','🎊','💫'][i%5]}</i>`).join('');
+ showPanel(`<div class="home"><div class="confetti">${conf}</div><div class="big">🧑‍🚀🏠</div><h2>任務完成，歡迎回家！</h2>
+ <p class="prompt">${G&&G.name?G.name+'，':''}你成功駕駛飛船飛返地球！🌍</p><p class="sub">你是一位守時又誠實的小太空人！${G?`　⭐ ${G.stars}　💎 ${G.gems}`:''}</p>
+ <div class="opts two"><button class="btn go" id="h_again">🔄 再玩一次</button><button class="btn alt" id="h_free">🚀 自由探索</button></div></div>`);
+ $('#h_again').onclick=()=>{SFX.click();newGame(G?G.name:'');fly.docked=null;renderHud();briefing();};$('#h_free').onclick=()=>{SFX.click();explore();};}
+const FACTS=[{n:'太陽',e:'☀️',f:'太陽是一顆會發光發熱的恆星。'},{n:'金星',e:'🟡',f:'金星是天空中最光的行星之一。'},{n:'地球',e:'🌍',f:'地球是我們的家，有水和空氣。'},{n:'月球',e:'🌙',f:'月球圍着地球轉，約一個月轉一圈。'},
+ {n:'火星',e:'🔴',f:'火星是紅色的，因為表面有很多鐵鏽。'},{n:'木星',e:'🟠',f:'木星是太陽系最大的行星。'},{n:'土星',e:'🪐',f:'土星有一個又大又美麗的光環。'},{n:'海王星',e:'🔵',f:'海王星離太陽很遠，非常寒冷。'},{n:'北斗衛星',e:'🛰️',f:'北斗衛星幫我們定位、導航和授時。'},{n:'太空站',e:'🛸',f:'太空人在太空站裏生活和做實驗。'}];
+const bodies=(api.bodies||[]).map(b=>({...b,...FACTS.find(f=>f.n===b.n)}));bodies.push({o:sats[0],r:12,...FACTS[8]});
+const pcard=document.createElement('div');pcard.id='pcard';document.body.appendChild(pcard);
+const backBtn=document.createElement('button');backBtn.id='backres';backBtn.className='btn alt';document.body.appendChild(backBtn);
+backBtn.onclick=()=>{SFX.click();mode.m='idle';pcard.style.display=backBtn.style.display='none';api.setFree(false);api.setSpeedMul(1);flyhint.style.display='none';
+ if(G&&G.done)result();else location.reload();};
+let near=null,exT=0;
+function explore(){hidePanel();fly.docked=null;fly.on=false;mode.m='explore';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';autoBtn.style.display='none';
+ api.setSpeedMul(3);api.setFree(true,true);api.setMission('自由太空探索');backBtn.textContent=G&&G.done?'↩ 返回成績表':'↩ 返回主頁';backBtn.style.display='block';near=null;exT=0;
+ flyhint.innerHTML=`🚀 <b>自由太空探索</b>：飛近星球，看看小知識！<span class="ctl">${api.touch?'左邊搖桿：前進／轉彎・右下「加速」':'W／↑ 前進・A D／← → 轉彎・Shift 加速'}</span>`;flyhint.style.display='block';setTimeout(()=>{if(mode.m==='explore')flyhint.style.display='none';},6000);}
+const bp=new THREE.Vector3();
+function exploreUpdate(dt){exT+=dt;if(exT<.25)return;exT=0;let best=null,bd=1e9;
+ for(const b of bodies){b.o.getWorldPosition(bp);const d=bp.distanceTo(ship.position)-b.r;if(d<b.r*5+150&&d<bd){bd=d;best=b;}}
+ if(best!==near){near=best;if(best){pcard.innerHTML=`<b>${best.e} ${best.n}</b><span>${best.f}</span>`;flyhint.style.display='none';pcard.style.display='block';pcard.classList.remove('in');void pcard.offsetWidth;pcard.classList.add('in');SFX.click();}else pcard.style.display='none';}
+ api.setMission(near?`附近：${near.n}`:'自由太空探索');}
+
 $('#gmute').onclick=e=>{muted=!muted;e.currentTarget.textContent=muted?'🔇':'🔊';};
-const dbg={get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
+const dbg={startHome,homeArrive,explore,get G(){return G;},mode,start,result,runTask,arrive,startFlight,glideTo,stationDone,nav,R,
  setSi(i){G.si=i;renderHud();},dock(i){G.si=i;renderHud();mode.m='dock';ring.visible=guide.visible=false;flyhint.style.display='none';arrow.style.display=mark.style.display='none';api.setFree(false);glideTo(STATIONS[i].key,.05);},
  task(kind,extra={}){const t={kind,title:'',skill:'hand',...extra};G.tasks=[t];G.ti=0;t.miss=0;t.finished=false;R[kind](t);}};
 return {update,get speed(){return speed;},dbg};
