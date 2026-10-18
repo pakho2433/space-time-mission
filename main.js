@@ -256,9 +256,9 @@ addEventListener('mousemove',e=>{if(document.pointerLockElement){lookX+=e.moveme
 let joy={x:0,y:0},jid=null,lid=null,lp=null;const jEl=document.getElementById('joy'),kn=document.getElementById('knob');const tb={};
 ['bUp','bBoost','bDown'].forEach(id=>{const b=document.getElementById(id);b.addEventListener('touchstart',e=>{e.preventDefault();tb[id]=1;});b.addEventListener('touchend',()=>tb[id]=0);});
 addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(t.target.classList.contains('tb'))continue;if(t.clientX<innerWidth/2&&jid===null&&started)jid=t.identifier;else if(lid===null){lid=t.identifier;lp=[t.clientX,t.clientY];}}},{passive:true});
-addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===jid){const r=jEl.getBoundingClientRect();let x=(t.clientX-r.left-60)/50,y=(t.clientY-r.top-60)/50;const l=Math.hypot(x,y);if(l>1){x/=l;y/=l;}joy={x,y};kn.style.left=40+x*40+'px';kn.style.top=40+y*40+'px';}
+addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===jid){const r=jEl.getBoundingClientRect(),h=r.width/2,R=h*.62;let x=(t.clientX-r.left-h)/R,y=(t.clientY-r.top-h)/R;const l=Math.hypot(x,y);if(l>1){x/=l;y/=l;}joy={x,y};kn.style.left=h+x*h*.56+'px';kn.style.top=h+y*h*.56+'px';}
 if(t.identifier===lid){lookX+=(t.clientX-lp[0])*1.5;lookY+=(t.clientY-lp[1])*1.5;lp=[t.clientX,t.clientY];}}},{passive:true});
-addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jid){jid=null;joy={x:0,y:0};kn.style.left=kn.style.top='40px';}if(t.identifier===lid)lid=null;}});
+addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jid){jid=null;joy={x:0,y:0};kn.style.left=kn.style.top='50%';}if(t.identifier===lid)lid=null;}});
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight);comp.setSize(innerWidth,innerHeight);});
 const tmpV=new THREE.Vector3(),cst={};
 const game=initGame({THREE,ship,cam,S,R,touch:touchDev,targets:{venus:planets[0].m,mars:planets[2].m,jupiter:planets[3].m,saturn:planets[4].m,earth,earthPiv:earth.parent},setFree,setMission:m=>{mission=m;},setSpeedMul:m=>{spMul=m;},get vel(){return vel;}});const spd=document.getElementById('speed'),clk=new THREE.Clock(),q=new THREE.Quaternion(),e3=new THREE.Euler();let t=0,frames=0;

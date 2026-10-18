@@ -109,14 +109,14 @@ body:not(.ready) #start{background:radial-gradient(#14205a,#03050f)}
 #navmark{display:none;position:fixed;z-index:4;width:0;height:0;pointer-events:none}#navmark:before{content:"";position:absolute;left:-34px;top:-34px;width:60px;height:60px;border:4px solid #ffd86b;border-radius:50%;animation:pulse 1s infinite}
 #navmark span{position:absolute;left:-70px;top:34px;width:140px;text-align:center;color:#ffd86b;font-weight:900;font-size:15px;text-shadow:0 1px 3px #000}
 #autonav{display:none;position:fixed;z-index:6;left:50%;bottom:20px;transform:translateX(-50%);width:auto;font-size:18px;min-height:50px}
-body.kidfly #bBoost{width:96px;height:96px;font-size:22px;font-weight:900;background:#ffb020cc;border-color:#fff;right:28px!important;bottom:28px!important}
-body.kidfly #joy{width:150px;height:150px}body.kidfly #knob{left:50px;top:50px;width:50px;height:50px;background:#ffd86bcc}
+body.kidfly #bBoost{width:clamp(100px,15vmin,136px);height:clamp(100px,15vmin,136px);font-size:clamp(22px,3vmin,28px);font-weight:900;background:#ffb020cc;border-color:#fff;right:28px!important;bottom:28px!important}
+body.kidfly #knob{background:#ffd86bcc}
 /* free flight */
 #ret{display:none}body.free #ret{display:block}
 #freehint{display:none;position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:4;color:#cfeaff;font-size:13px;text-shadow:0 1px 3px #000;pointer-events:none;text-align:center}
 .tb{position:fixed;z-index:4;display:none;width:68px;height:68px;border-radius:50%;border:2px solid #6cf8;background:#1a305088;color:#fff;font-size:15px;align-items:center;justify-content:center;user-select:none}
-#joy{position:fixed;left:30px;bottom:30px;width:120px;height:120px;border-radius:50%;border:2px solid #6cf8;z-index:4;display:none}
-#knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#6cf8}
+#joy{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:clamp(150px,24vmin,220px);height:clamp(150px,24vmin,220px);border-radius:50%;border:3px solid #8fd3ffaa;background:radial-gradient(circle,#8fd3ff22,#0a143055);z-index:4;display:none;box-sizing:border-box}
+#knob{position:absolute;left:50%;top:50%;width:44%;height:44%;margin:-22% 0 0 -22%;border-radius:50%;background:#6cf8;box-shadow:0 0 14px #ffd86b88;border:3px solid #fff8;box-sizing:border-box}
 #credit{position:fixed;left:8px;bottom:3px;z-index:3;font-size:9px;color:#fff;opacity:.4;pointer-events:none}
 /* portrait phones / narrow: compact bottom sheet */
 @media (max-aspect-ratio:4/5),(max-width:640px){
